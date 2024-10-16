@@ -6,7 +6,7 @@
 
 ## 下载安装
 
-`ohpm i @yongoe/rdbplus`  
+`ohpm i rdbplus`  
 OpenHarmony ohpm
 环境配置等更多内容，请参考[如何安装 OpenHarmony ohpm 包](https://ohpm.openharmony.cn/#/cn/help/downloadandinstall)
 
@@ -245,7 +245,7 @@ this.empModel.add(emp)
 
 ## 引入教程
 
-1. 首先引入ohpm依赖：`ohpm i @yongoe/rdbplus`
+1. 首先引入ohpm依赖：`ohpm i rdbplus`
 2. 创建一个数据库表对应的实体类，推荐ts格式，比如`Employee.ts`
 3. 创建一个Model类，比如 `EmpModel.ets`
 4. 直接在页面中`new出EmpModel`，就可以随意调用EmpModel的方法，无需编写sql代码

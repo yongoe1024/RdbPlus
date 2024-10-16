@@ -6,7 +6,7 @@
 
 ## 下载安装
 
-`ohpm i @yongoe/rdbplus`  
+`ohpm i rdbplus`  
 OpenHarmony ohpm
 环境配置等更多内容，请参考[如何安装 OpenHarmony ohpm 包](https://ohpm.openharmony.cn/#/cn/help/downloadandinstall)
 
@@ -245,7 +245,7 @@ this.empModel.add(emp)
 
 ## 引入教程
 
-1. 首先引入ohpm依赖：`ohpm i @yongoe/rdbplus`
+1. 首先引入ohpm依赖：`ohpm i rdbplus`
 2. 创建一个数据库表对应的实体类，推荐ts格式，比如`Employee.ts`
 3. 创建一个Model类，比如 `EmpModel.ets`
 4. 直接在页面中`new出EmpModel`，就可以随意调用EmpModel的方法，无需编写sql代码
@@ -256,11 +256,11 @@ this.empModel.add(emp)
 
 ```typescript
 export class Employee {
-  id: number
-  name: string
+   id: number
+   name: string
 
-  constructor() {
-  }
+   constructor() {
+   }
 }
 ```
 
@@ -280,21 +280,21 @@ import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
 
 export class EmpModel extends BaseMapper<Employee> {
-  constructor() {
-    super({ tableName: 't_emp', primaryKey: 'id' },
-      (res: relationalStore.ResultSet) => {
-        const emp = new Employee()
-        emp.id = res.getLong(res.getColumnIndex('id'))
-        emp.name = res.getString(res.getColumnIndex('name'))
-        return emp
-      },
-      // 可选参数
-      {
-        name: 'demo.db',
-        securityLevel: relationalStore.SecurityLevel.S1
-      }
-    )
-  }
+   constructor() {
+      super({ tableName: 't_emp', primaryKey: 'id' },
+         (res: relationalStore.ResultSet) => {
+            const emp = new Employee()
+            emp.id = res.getLong(res.getColumnIndex('id'))
+            emp.name = res.getString(res.getColumnIndex('name'))
+            return emp
+         },
+         // 可选参数
+         {
+            name: 'demo.db',
+            securityLevel: relationalStore.SecurityLevel.S1
+         }
+      )
+   }
 }
 ```
 
@@ -333,23 +333,23 @@ struct Index {
 
 ```javascript
 export class EmpModel extends BaseMapper<Employee> {
-    
-    ...其余省略...
-    
-  async createTable() {
-    // 删除旧表（可选）
-    await this.getDbHelper().execDML(`DROP TABLE t_emp;`, [])
-    // 调用DML方法，创建表
-    await this.getDbHelper().execDML(
-      `create table if not exists "t_emp" (
+
+   ...其余省略...
+
+   async createTable() {
+      // 删除旧表（可选）
+      await this.getDbHelper().execDML(`DROP TABLE t_emp;`, [])
+      // 调用DML方法，创建表
+      await this.getDbHelper().execDML(
+         `create table if not exists "t_emp" (
           id integer primary key autoincrement,
           name varchar(20)
       )`, [])
-    // 调用DML方法，插入一条数据
-    await this.getDbHelper().execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['第一条数据'])
-    // 调用DQL方法，查询数据库
-    const res =  await this.getDbHelper().execDQL(`SELECT * FROM user left join student ....后续省略;`, [])
-  }
+      // 调用DML方法，插入一条数据
+      await this.getDbHelper().execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['第一条数据'])
+      // 调用DQL方法，查询数据库
+      const res =  await this.getDbHelper().execDQL(`SELECT * FROM user left join student ....后续省略;`, [])
+   }
 }
 ```
 
@@ -362,8 +362,8 @@ export class EmpModel extends BaseMapper<Employee> {
 
 ```typescript
 new Wapper()
-  .set('name', '李四')
-  .eq('name', '张三')
+   .set('name', '李四')
+   .eq('name', '张三')
 ```
 
 ### eq
@@ -552,7 +552,7 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 
 ```typescript
 new Wapper().eq('name', '111')
-  .or(new Wapper().eq('name', '222').eq('age', 18))
+   .or(new Wapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
@@ -567,8 +567,8 @@ name = '111' or ( name = '222' and age=18 )
 
 ```typescript
 new Wapper()
-  .eq('name', '111')
-  .and(new Wapper().notEq('name', '222'))
+   .eq('name', '111')
+   .and(new Wapper().notEq('name', '222'))
 ```
 
 生成SQL为
