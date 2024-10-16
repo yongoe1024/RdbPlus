@@ -1,14 +1,18 @@
 import { relationalStore, ValueType } from "@kit.ArkData";
-import { Page, SQLUtils } from "./utils/SQLUtils";
+import { SQLUtils } from "./utils/SQLUtils";
 import { DBHelper } from "./utils/DBHelper";
 import { Wapper } from "./Wapper";
+import { Page } from "./Page";
 
 export class BaseMapper<T> {
   private dbHelper: DBHelper
   private sqlUtils: SQLUtils<T>
   private getRow: (res: relationalStore.ResultSet) => T
 
-  constructor(param: MapperParam, getRow: (res: relationalStore.ResultSet) => T, config?: relationalStore.StoreConfig) {
+  constructor(param: MapperParam, getRow: (res: relationalStore.ResultSet) => T, config: relationalStore.StoreConfig = {
+    name: 'demo.db',
+    securityLevel: relationalStore.SecurityLevel.S1  //安全级别
+  }) {
     this.sqlUtils = new SQLUtils(param.tableName, param.primaryKey)
     this.getRow = getRow
     this.dbHelper = new DBHelper(config)
@@ -121,85 +125,65 @@ export class BaseMapper<T> {
     return entity
   }
 
+
   /**
-   * 根据主键更新
-   * @param obj 实体类，id不可以为空
-   * @returns 返回成功失败
+   * 添加一行数据
+   * @param obj 实体类
+   * @returns 无返回值
    */
-  async updateById(obj: T): Promise<boolean> {
-    const mapperData = this.sqlUtils.updateById(obj)
-    const res: boolean = await this.dbHelper.execDML(
+  async insert(obj: T): Promise<void> {
+    const mapperData = this.sqlUtils.insert(obj)
+    await this.dbHelper.execDML(
       mapperData.sql, mapperData.values
     )
-    return res
   }
 
   /**
    * 更新，手动set更新字段
    * @param wapper 更新条件
-   * @returns 返回成功失败
+   * @returns 无返回值
    */
-  async update(wapper: Wapper): Promise<boolean> {
+  async update(wapper: Wapper): Promise<void> {
     const sql = this.sqlUtils.update(wapper.getUpdate(), wapper.getWhere())
-    const res: boolean = await this.dbHelper.execDML(
+    await this.dbHelper.execDML(
       sql, [...wapper.getUpdateValue(), ...wapper.getWhereValue()]
     )
-    return res
   }
 
   /**
-   * 根据主键删除
-   * @param id 主键
-   * @returns 返回成功失败
+   * 根据主键更新
+   * @param obj 实体类，id不可以为空
+   * @returns 无返回值
    */
-  async deleteById(id: ValueType): Promise<boolean> {
-    const mapperData = this.sqlUtils.deleteById(id)
-    const res: boolean = await this.dbHelper.execDML(
+  async updateById(obj: T): Promise<void> {
+    const mapperData = this.sqlUtils.updateById(obj)
+    await this.dbHelper.execDML(
       mapperData.sql, mapperData.values
     )
-    return res
   }
 
   /**
    * 条件删除
    * @param wapper 删除条件
-   * @returns 返回成功失败
+   * @returns 无返回值
    */
-  async delete(wapper: Wapper): Promise<boolean> {
+  async delete(wapper: Wapper): Promise<void> {
     const sql = this.sqlUtils.delete(wapper.getWhere())
-    const res: boolean = await this.dbHelper.execDML(
+    await this.dbHelper.execDML(
       sql, wapper.getWhereValue()
     )
-    return res
   }
 
   /**
-   * 添加一行数据
-   * @param obj 实体类
-   * @returns 返回成功失败
+   * 根据主键删除
+   * @param id 主键
+   * @returns 无返回值
    */
-  async add(obj: T): Promise<boolean> {
-    const mapperData = this.sqlUtils.add(obj)
-    const res: boolean = await this.dbHelper.execDML(
+  async deleteById(id: ValueType): Promise<void> {
+    const mapperData = this.sqlUtils.deleteById(id)
+    await this.dbHelper.execDML(
       mapperData.sql, mapperData.values
     )
-    return res
-  }
-
-  /**
-   * 批量删除
-   * @param list 数组
-   * @returns 返回成功的数量
-   */
-  async deleteByIds(ids: ValueType[]): Promise<number> {
-    let num = 0
-    for (let i = 0; i < ids.length; i++) {
-      const res = await this.deleteById(ids[i])
-      if (res) {
-        num++
-      }
-    }
-    return num
   }
 }
 

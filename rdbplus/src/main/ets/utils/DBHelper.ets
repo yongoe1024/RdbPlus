@@ -6,13 +6,9 @@ import relationalStore from '@ohos.data.relationalStore'
 export class DBHelper {
   private config: relationalStore.StoreConfig
 
-  constructor(config: relationalStore.StoreConfig = {
-    name: 'demo.db',
-    securityLevel: relationalStore.SecurityLevel.S1  //安全级别
-  }) {
+  constructor(config: relationalStore.StoreConfig) {
     this.config = config
   }
-
 
   private async getStore() {
     return await relationalStore.getRdbStore(getContext(this), this.config)
@@ -21,20 +17,20 @@ export class DBHelper {
   /**
    * 执行：插入修改删除
    */
-  async execDML(sql: string, params: Array<relationalStore.ValueType> = []): Promise<boolean> {
+  async execDML(sql: string, params: Array<relationalStore.ValueType> = []): Promise<void> {
     let store: relationalStore.RdbStore | undefined
     try {
       console.info('DML:', sql, JSON.stringify(params))
       store = await this.getStore()
       await store.executeSql(sql, params)
       await store.close()
-      return true
     } catch (e) {
       console.error('DML语句错误', e.message, e.code, JSON.stringify(e))
+      throw new Error('DML语句错误')
+    } finally {
       if (store) {
         await store.close()
       }
-      return false
     }
   }
 
@@ -51,10 +47,11 @@ export class DBHelper {
       return res
     } catch (e) {
       console.error('DQL语句错误', e.message, e.code, JSON.stringify(e))
+      throw new Error('DQL语句错误')
+    } finally {
       if (store) {
         await store.close()
       }
-      throw new Error('DQL语句错误')
     }
   }
 }

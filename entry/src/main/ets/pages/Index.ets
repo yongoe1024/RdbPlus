@@ -168,7 +168,7 @@ struct Index {
       Button('添加').onClick(async () => {
         const emp = new Employee()
         emp.name = '新添加的'
-        showDialog(JSON.stringify(await this.empModel.add(emp)))
+        showDialog(JSON.stringify(await this.empModel.insert(emp)))
       })
 
       Button('id=20,updateById').onClick(async () => {
@@ -192,11 +192,6 @@ struct Index {
       Button('删除byId').onClick(async () => {
         const boo = await this.empModel.deleteById(5)
         showDialog('id==5被删除', JSON.stringify(boo))
-      })
-
-      Button('批量删除').onClick(async () => {
-        const boo = await this.empModel.deleteByIds([10, 11])
-        showDialog('id==10，11被删除', JSON.stringify(boo))
       })
 
     }

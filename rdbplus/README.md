@@ -2,7 +2,7 @@
 
 ## 简介
 
-这是一个sqlite的增强工具，无需编写sql代码，一行搞定增删改查，为简化开发、提高效率而生。
+这是一个sqlite的增强工具，无需编写sql代码，通过继承BaseMapper类，一行搞定增删改查，为简化开发、提高效率而生。
 
 ## 下载安装
 
@@ -25,12 +25,11 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 | list        | select查询         |
 | page        | select分页查询       |
 | getById     | 根据主键ID查询         |
+| insert      | 插入一条记录           |
 | updateById  | 根据主键ID更新数据       |
 | update      | 通过指定条件更新数据       |
 | deleteById  | 根据主键ID删除数据       |
 | delete      | 通过指定条件删除数据       |
-| deleteByIds | 根据主键ID批量删除数据     |
-| add         | 插入一条记录           |
 
 ## 引入教程
 
@@ -58,30 +57,30 @@ export class Employee {
 推荐在`src/main/ets/model`路径中，创建ets文件`EmpModel.ets`
 
 1. 首先创建`EmpModel类`，然后继承`BaseMapper`，传入泛型`Employee`
-2. 创建构造函数，调用super方法。
-   第一个参数是`一个对象`，包含`表名`、`主键字段名`两项内容
-   第二个参数是`箭头函数`:`(res: relationalStore.ResultSet)=> Employee`，本意是为了从ResultSet中得到一行数据
-   第三个参数是`可选值`，传入`relationalStore.StoreConfig`，比如数据库名、安全级别等。默认为name: 'demo.db'
+2. 创建构造函数，调用super方法。  
+   第一个参数是`一个对象`，包含`表名`、`主键字段名`两项内容  
+   第二个参数是`箭头函数`:`(res: relationalStore.ResultSet)=> T`，返回一个泛型对象，本意是为了从ResultSet中得到一行数据  
+   第三个参数是`可选值`，传入`relationalStore.StoreConfig`，比如数据库名、安全级别等。默认库名name: 'demo.db'
 
 ```typescript
 import { Employee } from '../entity/Employee'
 import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
 
+const getRow = (res: relationalStore.ResultSet) => {
+  const emp = new Employee()
+  emp.id = res.getLong(res.getColumnIndex('id'))
+  emp.name = res.getString(res.getColumnIndex('name'))
+  return emp
+}
+
 export class EmpModel extends BaseMapper<Employee> {
   constructor() {
-    super({ tableName: 't_emp', primaryKey: 'id' },
-      (res: relationalStore.ResultSet) => {
-        const emp = new Employee()
-        emp.id = res.getLong(res.getColumnIndex('id'))
-        emp.name = res.getString(res.getColumnIndex('name'))
-        return emp
-      },
+    super(
+      { tableName: 't_emp', primaryKey: 'id' },
+      getRow,
       // 可选参数
-      {
-        name: 'demo.db',
-        securityLevel: relationalStore.SecurityLevel.S1
-      }
+      { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
     )
   }
 }
@@ -114,7 +113,7 @@ struct Index {
 ### 建表、连接查询等复杂SQl，采用手写SQL方法
 
 1. 调用`EmpModel`对象中的`getDbHelper()`方法，得到一个`DBHelper`
-2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数、数据查询函数（原生execDML、execDQL的封装）
+2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数（DML）、数据查询函数（DQL）
 
 #### 示例
 
@@ -142,7 +141,7 @@ export class EmpModel extends BaseMapper<Employee> {
 }
 ```
 
-## 函数介绍
+## API介绍
 
 本章内容的前提条件是：已经实现了一个Model类，例如`EmpModel`
 
@@ -150,8 +149,8 @@ export class EmpModel extends BaseMapper<Employee> {
 
 获取一个DbHelper对象，直接进行SQL语句的调用
 
-1. 调用`EmpModel`中的`getDbHelper()`方法，得到一个`DBHelper`对象
-2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数、数据查询函数（原生execDML、execDQL的封装）
+1. 调用`EmpModel`中的`getDbHelper()`函数，得到一个`DBHelper`对象
+2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数（DML）、数据查询函数 （DQL）
 
 本示例和上面的`建表、连接查询等复杂SQl，采用手写SQL方法`一致
 
@@ -273,6 +272,25 @@ const record = page.record
 this.empModel.getById(14)
 ```
 
+### insert
+
+插入一条记录
+
+| 入参     | 说明       |
+|--------|----------|
+| obj: T | 一个泛型T的对象 |
+
+| 返回值  | 说明     |
+|------|--------|
+| void | 失败抛出异常 |
+
+```typescript
+const emp = new Employee()
+emp.name = '新添加的'
+// id没赋值，因为是自增
+this.empModel.insert(emp)
+```
+
 ### updateById
 
 根据主键ID更新数据
@@ -283,7 +301,7 @@ this.empModel.getById(14)
 
 | 返回值     | 说明                 |
 |---------|--------------------|
-| boolean | 成功返回true，失败返回false |
+| void | 失败抛出异常 |
 
 ```typescript
 const emp = new Employee()
@@ -302,7 +320,7 @@ this.empModel.updateById(emp)
 
 | 返回值     | 说明                 |
 |---------|--------------------|
-| boolean | 成功返回true，失败返回false |
+| void | 失败抛出异常 |
 
 ```typescript
 this.empModel.update(new Wapper().set('name', '修改为bbb').eq('name', 'name等于aaa'))
@@ -318,7 +336,7 @@ this.empModel.update(new Wapper().set('name', '修改为bbb').eq('name', 'name�
 
 | 返回值     | 说明                 |
 |---------|--------------------|
-| boolean | 成功返回true，失败返回false |
+| void | 失败抛出异常 |
 
 ```typescript
 this.empModel.deleteById(5)
@@ -334,45 +352,10 @@ this.empModel.deleteById(5)
 
 | 返回值     | 说明                 |
 |---------|--------------------|
-| boolean | 成功返回true，失败返回false |
+| void | 失败抛出异常 |
 
 ```typescript
 this.empModel.delete(new Wapper().eq('name', '111'))
-```
-
-### deleteByIds
-
-根据主键ID批量删除数据
-
-| 入参               | 说明     |
-|------------------|--------|
-| ids: ValueType[] | 主键值的数组 |
-
-| 返回值    | 说明      |
-|--------|---------|
-| number | 返回成功的数量 |
-
-```typescript
-this.empModel.deleteByIds([10, 11])
-```
-
-### add
-
-插入一条记录
-
-| 入参     | 说明       |
-|--------|----------|
-| obj: T | 一个泛型T的对象 |
-
-| 返回值     | 说明                 |
-|---------|--------------------|
-| boolean | 成功返回true，失败返回false |
-
-```typescript
-const emp = new Employee()
-emp.name = '新添加的'
-// id没赋值，因为是自增
-this.empModel.add(emp)
 ```
 
 ## 条件构造器介绍
@@ -613,15 +596,71 @@ new Wapper().select('count(*),sum(age)')
 new Wapper().select('age as nianling')
 ```
 
-## 贡献代码与技术交流
+## 其他功能
 
-使用过程中发现任何问题都可以提 `Issue`  
-欢迎你给我们发 `PR`
+#### 多数据源
+
+参考如下示例
+
+```typescript
+import { Employee } from '../entity/Employee'
+import { relationalStore } from '@kit.ArkData'
+import { BaseMapper, MapperParam } from 'rdbplus'
+
+// 实现一个 getRow
+const getRow = (res: relationalStore.ResultSet) => {
+  const emp = new Employee()
+  emp.id = res.getLong(res.getColumnIndex('id'))
+  emp.name = res.getString(res.getColumnIndex('name'))
+  return emp
+}
+
+export class EmpModel extends BaseMapper<Employee> {
+  // 构造函数，仅接收参数，将参数传给super
+  private constructor(param: MapperParam, getRow: (res: relationalStore.ResultSet) => Employee,
+    config?: relationalStore.StoreConfig) {
+    super(param, getRow, config)
+  }
+
+  // 手动 new出EmpModel，第三个参数可设置数据库名
+  // 数据库1
+  static getDemo1DB(): EmpModel {
+    return new EmpModel(
+      { tableName: 't_emp', primaryKey: 'id' },
+      getRow,
+      {
+        name: 'Demo1DB.db',
+        securityLevel: relationalStore.SecurityLevel.S1
+      }
+    )
+  }
+
+  // 数据库2
+  static getDemo2DB(): EmpModel {
+    return new EmpModel(
+      { tableName: 't_emp', primaryKey: 'id' },
+      getRow,
+      {
+        name: 'Demo2DB.db',
+        securityLevel: relationalStore.SecurityLevel.S1
+      }
+    )
+  }
+}
+```
+
+#### 事务
+
+暂未实现
+
+## 贡献代码
+
+使用过程中发现任何问题都可以提 `Issue`，也欢迎您发 `PR`
 
 https://gitee.com/yongoe/RdbPlus
 
-https://github.com/yongoe1024/RdbPlus` (以github为主)`
+https://github.com/yongoe1024/RdbPlus `(以github为主)`
 
 ## 开源协议
 
-本项目基于 MIT License
+本项目基于 [MIT License](https://mit-license.org)
