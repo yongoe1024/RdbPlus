@@ -10,6 +10,12 @@
 OpenHarmony ohpm
 环境配置等更多内容，请参考[如何安装 OpenHarmony ohpm 包](https://ohpm.openharmony.cn/#/cn/help/downloadandinstall)
 
+## 使用案例
+
+https://gitee.com/yongoe/RdbPlus/tree/main/entry/src/main/ets
+
+https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
+
 ## 功能介绍
 
 | 函数名         | 介绍               |
@@ -26,24 +32,150 @@ OpenHarmony ohpm
 | deleteByIds | 根据主键ID批量删除数据     |
 | add         | 插入一条记录           |
 
-## 使用方法
+## 引入教程
+
+1. 首先引入ohpm依赖：`ohpm i rdbplus`
+2. 创建一个数据库表对应的实体类，推荐ts格式，比如`Employee.ts`
+3. 创建一个Model类，比如 `EmpModel.ets`
+4. 直接在页面中`new出EmpModel`，就可以随意调用EmpModel的方法，无需编写sql代码
+
+### 第一步：创建实体类
+
+推荐在`src/main/ets/entity`路径中，创建ts文件`Employee.ts`
+
+```typescript
+export class Employee {
+  id: number
+  name: string
+
+  constructor() {
+  }
+}
+```
+
+### 第二步：创建Model类
+
+推荐在`src/main/ets/model`路径中，创建ets文件`EmpModel.ets`
+
+1. 首先创建`EmpModel类`，然后继承`BaseMapper`，传入泛型`Employee`
+2. 创建构造函数，调用super方法。
+   第一个参数是`一个对象`，包含`表名`、`主键字段名`两项内容
+   第二个参数是`箭头函数`:`(res: relationalStore.ResultSet)=> Employee`，本意是为了从ResultSet中得到一行数据
+   第三个参数是`可选值`，传入`relationalStore.StoreConfig`，比如数据库名、安全级别等。默认为name: 'demo.db'
+
+```typescript
+import { Employee } from '../entity/Employee'
+import { relationalStore } from '@kit.ArkData'
+import { BaseMapper } from 'rdbplus'
+
+export class EmpModel extends BaseMapper<Employee> {
+  constructor() {
+    super({ tableName: 't_emp', primaryKey: 'id' },
+      (res: relationalStore.ResultSet) => {
+        const emp = new Employee()
+        emp.id = res.getLong(res.getColumnIndex('id'))
+        emp.name = res.getString(res.getColumnIndex('name'))
+        return emp
+      },
+      // 可选参数
+      {
+        name: 'demo.db',
+        securityLevel: relationalStore.SecurityLevel.S1
+      }
+    )
+  }
+}
+```
+
+### 第三步：页面中调用
+
+```
+import { EmpModel } from '../model/EmpModel'
+
+@Entry
+@Component
+struct Index {
+  empModel = new EmpModel()
+
+  build()
+  {
+    Button('查询全部数据').onClick(() => {
+      // 查询全部
+       let list:1 Employee[]  = await this.empModel.list()
+      // 条件查询
+       let list2: Employee[]  = await this.empModel.list(new Wapper().eq('name', '李四'))
+    })
+  }
+}
+
+
+```
+
+### 建表、连接查询等复杂SQl，采用手写SQL方法
+
+1. 调用`EmpModel`对象中的`getDbHelper()`方法，得到一个`DBHelper`
+2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数、数据查询函数（原生execDML、execDQL的封装）
+
+#### 示例
+
+在`EmpModel.ets`中，添加一个函数`createTable`
+
+```javascript
+export class EmpModel extends BaseMapper<Employee> {
+    ...其余省略
+    ...
+
+    async createTable() {
+        // 删除旧表（可选）
+        await this.getDbHelper().execDML(`DROP TABLE t_emp;`, [])
+        // 调用DML方法，创建表
+        await this.getDbHelper().execDML(
+            `create table if not exists "t_emp" (
+          id integer primary key autoincrement,
+          name varchar(20)
+      )`, [])
+        // 调用DML方法，插入一条数据
+        await this.getDbHelper().execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['第一条数据'])
+        // 调用DQL方法，查询数据库
+        const res = await this.getDbHelper().execDQL(`SELECT * FROM user left join student ....后续省略;`, [])
+    }
+}
+```
+
+## 函数介绍
+
+本章内容的前提条件是：已经实现了一个Model类，例如`EmpModel`
 
 ### getDbHelper
 
 获取一个DbHelper对象，直接进行SQL语句的调用
 
+1. 调用`EmpModel`中的`getDbHelper()`方法，得到一个`DBHelper`对象
+2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数、数据查询函数（原生execDML、execDQL的封装）
+
+本示例和上面的`建表、连接查询等复杂SQl，采用手写SQL方法`一致
+
 ```javascript
-// 调用DML方法，删除表 
-await this.getDbHelper().execDML(`DROP TABLE t_emp;`, [])
-// 调用DML方法，创建表
-const sql = `create table if not exists "t_emp" (
+// 在`EmpModel.ets`中，添加一个函数`createTable`
+export class EmpModel extends BaseMapper<Employee> {
+    ...其余省略
+    ...
+
+    async createTable() {
+        // 删除旧表（可选）
+        await this.getDbHelper().execDML(`DROP TABLE t_emp;`, [])
+        // 调用DML方法，创建表
+        await this.getDbHelper().execDML(
+            `create table if not exists "t_emp" (
           id integer primary key autoincrement,
-          name varchar(20) )`
-await this.getDbHelper().execDML(sql, [])
-// 调用DML方法，插入一条数据
-await this.getDbHelper().execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['第一条数据'])
-// 调用DQL方法，查询数据库
-const res = await this.getDbHelper().execDQL(`SELECT * FROM user left join student ....后续省略;`, [])
+          name varchar(20)
+      )`, [])
+        // 调用DML方法，插入一条数据
+        await this.getDbHelper().execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['第一条数据'])
+        // 调用DQL方法，查询数据库
+        const res = await this.getDbHelper().execDQL(`SELECT * FROM user left join student ....后续省略;`, [])
+    }
+}
 ```
 
 ### count
@@ -243,116 +375,6 @@ emp.name = '新添加的'
 this.empModel.add(emp)
 ```
 
-## 引入教程
-
-1. 首先引入ohpm依赖：`ohpm i rdbplus`
-2. 创建一个数据库表对应的实体类，推荐ts格式，比如`Employee.ts`
-3. 创建一个Model类，比如 `EmpModel.ets`
-4. 直接在页面中`new出EmpModel`，就可以随意调用EmpModel的方法，无需编写sql代码
-
-### 第一步：创建实体类
-
-推荐在`src/main/ets/entity`路径中，创建ts文件`Employee.ts`
-
-```typescript
-export class Employee {
-   id: number
-   name: string
-
-   constructor() {
-   }
-}
-```
-
-### 第二步：创建Model类
-
-推荐在`src/main/ets/model`路径中，创建ets文件`EmpModel.ets`
-
-1. 首先创建`EmpModel类`，然后继承`BaseMapper`，传入泛型`Employee`
-2. 创建构造函数，调用super方法。
-   第一个参数是`一个对象`，包含`表名`、`主键字段名`两项内容
-   第二个参数是`箭头函数`:`(res: relationalStore.ResultSet)=> Employee`，本意是为了从ResultSet中得到一行数据
-   第三个参数是`可选值`，传入`relationalStore.StoreConfig`，比如数据库名、安全级别等。默认为name: 'demo.db'
-
-```typescript
-import { Employee } from '../entity/Employee'
-import { relationalStore } from '@kit.ArkData'
-import { BaseMapper } from 'rdbplus'
-
-export class EmpModel extends BaseMapper<Employee> {
-   constructor() {
-      super({ tableName: 't_emp', primaryKey: 'id' },
-         (res: relationalStore.ResultSet) => {
-            const emp = new Employee()
-            emp.id = res.getLong(res.getColumnIndex('id'))
-            emp.name = res.getString(res.getColumnIndex('name'))
-            return emp
-         },
-         // 可选参数
-         {
-            name: 'demo.db',
-            securityLevel: relationalStore.SecurityLevel.S1
-         }
-      )
-   }
-}
-```
-
-### 第三步：页面中调用
-
-```
-import { EmpModel } from '../model/EmpModel'
-
-@Entry
-@Component
-struct Index {
-  empModel = new EmpModel()
-
-  build()
-  {
-    Button('查询全部数据').onClick(() => {
-      // 查询全部
-       let list:1 Employee[]  = await this.empModel.list()
-      // 条件查询
-       let list2: Employee[]  = await this.empModel.list(new Wapper().eq('name', '李四'))
-    })
-  }
-}
-
-
-```
-
-### 建表、连接查询等复杂SQl，采用手写SQL方法
-
-1. 调用`EmpModel`对象中的`getDbHelper()`方法，得到一个`DBHelper`
-2. DBHelper包含两个函数：`execDML`、`execDQL`，分别是数据操纵函数、数据查询函数（原生execDML、execDQL的封装）
-
-#### 示例
-
-在`EmpModel.ets`中，添加一个函数`createTable`
-
-```javascript
-export class EmpModel extends BaseMapper<Employee> {
-
-   ...其余省略...
-
-   async createTable() {
-      // 删除旧表（可选）
-      await this.getDbHelper().execDML(`DROP TABLE t_emp;`, [])
-      // 调用DML方法，创建表
-      await this.getDbHelper().execDML(
-         `create table if not exists "t_emp" (
-          id integer primary key autoincrement,
-          name varchar(20)
-      )`, [])
-      // 调用DML方法，插入一条数据
-      await this.getDbHelper().execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['第一条数据'])
-      // 调用DQL方法，查询数据库
-      const res =  await this.getDbHelper().execDQL(`SELECT * FROM user left join student ....后续省略;`, [])
-   }
-}
-```
-
 ## 条件构造器介绍
 
 ### set
@@ -362,8 +384,8 @@ export class EmpModel extends BaseMapper<Employee> {
 
 ```typescript
 new Wapper()
-   .set('name', '李四')
-   .eq('name', '张三')
+  .set('name', '李四')
+  .eq('name', '张三')
 ```
 
 ### eq
@@ -552,7 +574,7 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 
 ```typescript
 new Wapper().eq('name', '111')
-   .or(new Wapper().eq('name', '222').eq('age', 18))
+  .or(new Wapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
@@ -567,8 +589,8 @@ name = '111' or ( name = '222' and age=18 )
 
 ```typescript
 new Wapper()
-   .eq('name', '111')
-   .and(new Wapper().notEq('name', '222'))
+  .eq('name', '111')
+  .and(new Wapper().notEq('name', '222'))
 ```
 
 生成SQL为
@@ -590,3 +612,16 @@ new Wapper().select('count(*),sum(age)')
 //字段别名
 new Wapper().select('age as nianling')
 ```
+
+## 贡献代码与技术交流
+
+使用过程中发现任何问题都可以提 `Issue`  
+欢迎你给我们发 `PR`
+
+https://gitee.com/yongoe/RdbPlus
+
+https://github.com/yongoe1024/RdbPlus` (以github为主)`
+
+## 开源协议
+
+本项目基于 MIT License
