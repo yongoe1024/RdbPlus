@@ -21,11 +21,11 @@ struct Index {
       })
 
       Button('count').onClick(async () => {
-        showDialog(JSON.stringify(await this.empModel.count()))
+        showDialog(JSON.stringify(await this.empModel.count(new Wapper())))
       })
 
       Button('page').onClick(async () => {
-        const page = await this.empModel.page(1,10)
+        const page = await this.empModel.page(1, 10, new Wapper())
         // 总数
         const total = page.total
         // 当前页
@@ -192,6 +192,53 @@ struct Index {
       Button('删除byId').onClick(async () => {
         const boo = await this.empModel.deleteById(5)
         showDialog('id==5被删除', JSON.stringify(boo))
+      })
+
+      Divider()
+        .width('100%')
+        .height(10)
+        .color('#000')
+
+      Button('事务成功').onClick(async (event: ClickEvent) => {
+        // 获取一个db连接
+        const db = await this.empModel.getConnection()
+        try {
+          db.beginTransaction()
+          const emp = new Employee()
+          emp.name = '事务'
+          // 将 db 传进去，保持所有操作在同一连接上
+          this.empModel.insert(emp, db)
+          //提交事务
+          db.commit()
+        } catch (e) {
+          // 回滚
+          db.rollBack()
+        } finally {
+          // 关闭连接
+          db.close()
+        }
+      })
+
+      Button('事务失败').onClick(async (event: ClickEvent) => {
+        // 获取一个db连接
+        const db = await this.empModel.getConnection()
+        try {
+          db.beginTransaction()
+          const emp = new Employee()
+          emp.name = '事务失败'
+          // 将 db 传进去，保持所有操作在同一连接上
+          this.empModel.insert(emp, db)
+          // 抛出异常
+          throw new Error()
+          //提交事务
+          db.commit()
+        } catch (e) {
+          // 回滚
+          db.rollBack()
+        } finally {
+          // 关闭连接
+          db.close()
+        }
       })
 
     }
