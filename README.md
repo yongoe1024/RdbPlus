@@ -35,8 +35,8 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 1. 首先引入ohpm依赖：`ohpm i rdbplus`
 2. 创建一个数据库表对应的实体类，推荐ts格式，比如`Employee.ts`
-3. 创建一个Model类，比如 `EmpModel.ets`
-4. 直接在页面中`new出EmpModel`，就可以调用增删改查的方法，无需编写SQL代码
+3. 创建一个mapper类，比如 `EmpMapper.ets`
+4. 直接在页面中`new出EmpMapper`，就可以调用增删改查的方法，无需编写SQL代码
 
 ### 第一步：创建实体类
 
@@ -52,11 +52,11 @@ export class Employee {
 }
 ```
 
-### 第二步：创建Model类
+### 第二步：创建Mapper类
 
-推荐在`src/main/ets/model`路径中，创建ets文件`EmpModel.ets`
+推荐在`src/main/ets/mapper`路径中，创建ets文件`EmpMapper.ets`
 
-1. 首先创建`EmpModel类`，然后继承`BaseMapper`，传入泛型`Employee`
+1. 首先创建`EmpMapper类`，然后继承`BaseMapper`，传入泛型`Employee`
 2. 创建构造函数，调用super方法。  
    第一个参数是`一个对象`，包含`表名`、`主键字段名`两项内容  
    第二个参数是`回调函数`:`(res: relationalStore.ResultSet)=> T`，返回一个泛型对象，本意是为了从ResultSet中得到一行数据  
@@ -74,7 +74,7 @@ const getRow = (res: relationalStore.ResultSet) => {
   return emp
 }
 
-export class EmpModel extends BaseMapper<Employee> {
+export class EmpMapper extends BaseMapper<Employee> {
   constructor() {
     super(
       { tableName: 't_emp', primaryKey: 'id' },
@@ -89,22 +89,22 @@ export class EmpModel extends BaseMapper<Employee> {
 ### 第三步：页面中调用
 
 ```
-import { EmpModel } from '../model/EmpModel'
+import { EmpMapper } from '../mapper/EmpMapper'
 
 @Entry
 @Component
 struct Index {
-  empModel = new EmpModel()
+  empMapper = new EmpMapper()
 
   build()
   {
     Button('查询全部数据').onClick(() => {
        // 查询全部
-       let list:1 Employee[]  = await this.empModel.list(new Wapper())
+       let list:1 Employee[]  = await this.empMapper.list(new Wapper())
        // 条件查询
-       let list2: Employee[]  = await this.empModel.list(new Wapper().eq('name', '李四'))
+       let list2: Employee[]  = await this.empMapper.list(new Wapper().eq('name', '李四'))
        // 统计总数
-       const num:number = await this.empModel.count(new Wapper())
+       const num:number = await this.empMapper.count(new Wapper())
     })
   }
 }
@@ -112,17 +112,17 @@ struct Index {
 
 ### 建表、连接查询等复杂SQl，采用手写SQL方法
 
-1. 调用`EmpModel`对象中的`getConnection()`方法，得到一个`Connection`对象
+1. 调用`EmpMapper`对象中的`getConnection()`方法，得到一个`Connection`对象
 2. `Connection`有两个函数：`execDML`、`execDQL`  
    `execDML`是数据操纵函数，执行创建、添加、修改 语句  
    `execDQL`是数据查询函数，执行查询语句
 
 #### 示例
 
-在`EmpModel.ets`中，添加一个函数`createTable`，用来创建表
+在`EmpMapper.ets`中，添加一个函数`createTable`，用来创建表
 
 ```javascript
-export class EmpModel extends BaseMapper<Employee> {
+export class EmpMapper extends BaseMapper<Employee> {
     ...其余省略
     ...
 
@@ -142,7 +142,7 @@ export class EmpModel extends BaseMapper<Employee> {
 
 ## API介绍
 
-以下代码示例的前提条件是：已经实现了一个Model类，例如`EmpModel`
+以下代码示例的前提条件是：已经实现了一个mapper类，例如`EmpMapper`
 
 ### count
 
@@ -158,7 +158,7 @@ export class EmpModel extends BaseMapper<Employee> {
 
 ```typescript
 // 统计总数
-const num:number = await this.empModel.count(new Wapper())
+const num:number = await this.empMapper.count(new Wapper())
 ```
 
 ### selectByMap
@@ -175,7 +175,7 @@ const num:number = await this.empModel.count(new Wapper())
 
 ```typescript
 // 查询name等于111的数据，封装成Map返回
-const mapList = await this.empModel.selectByMap(new Wapper().eq('name', '111'))
+const mapList = await this.empMapper.selectByMap(new Wapper().eq('name', '111'))
 ```
 
 ### list
@@ -192,7 +192,7 @@ const mapList = await this.empModel.selectByMap(new Wapper().eq('name', '111'))
 
 ```typescript
 // 查询name等于111的数据，返回数组
-const list = await this.empModel.list(new Wapper().eq('name', '111'))
+const list = await this.empMapper.list(new Wapper().eq('name', '111'))
 ```
 
 ### page
@@ -216,7 +216,7 @@ const list = await this.empModel.list(new Wapper().eq('name', '111'))
 
 ```typescript
 // 查询第一页的数据，返回Page对象
-const page = await this.empModel.page(1, 10)
+const page = await this.empMapper.page(1, 10)
 // 总数
 const total = page.total
 // 当前页
@@ -241,7 +241,7 @@ const record = page.record
 
 ```typescript
 // 查询主键ID等于14的数据
-this.empModel.getById(14)
+this.empMapper.getById(14)
 ```
 
 ### insert
@@ -260,7 +260,7 @@ this.empModel.getById(14)
 const emp = new Employee()
 emp.name = '新添加的'
 // 如果是自增，id可以不用赋值
-this.empModel.insert(emp)
+this.empMapper.insert(emp)
 ```
 
 ### updateById
@@ -280,7 +280,7 @@ const emp = new Employee()
 emp.id = 20
 emp.name = '张三'
 // 根据主键id修改
-this.empModel.updateById(emp)
+this.empMapper.updateById(emp)
 ```
 
 ### update
@@ -297,7 +297,7 @@ this.empModel.updateById(emp)
 
 ```typescript
 // 将name等于张三的数据，改为name等于李四
-this.empModel.update(new Wapper().set('name', '李四').eq('name', '张三'))
+this.empMapper.update(new Wapper().set('name', '李四').eq('name', '张三'))
 ```
 
 ### deleteById
@@ -314,7 +314,7 @@ this.empModel.update(new Wapper().set('name', '李四').eq('name', '张三'))
 
 ```typescript
 // 删除主键ID等于5的数据
-this.empModel.deleteById(5)
+this.empMapper.deleteById(5)
 ```
 
 ### delete
@@ -331,7 +331,7 @@ this.empModel.deleteById(5)
 
 ```typescript
 // 删除name等于111的数据
-this.empModel.delete(new Wapper().eq('name', '111'))
+this.empMapper.delete(new Wapper().eq('name', '111'))
 ```
 
 ### getConnection
@@ -649,16 +649,16 @@ const getRow = (res: relationalStore.ResultSet) => {
   return emp
 }
 
-export class EmpModel extends BaseMapper<Employee> {
+export class EmpMapper extends BaseMapper<Employee> {
   // 构造函数，仅接收参数，将参数传给super
   private constructor(config: relationalStore.StoreConfig) {
     super({ tableName: 't_emp', primaryKey: 'id' }, getRow, config)
   }
 
-  // 手动 new出EmpModel
+  // 手动 new出EmpMapper
   // 数据库1
-  static getDemo1DB(): EmpModel {
-    return new EmpModel(
+  static getDemo1DB(): EmpMapper {
+    return new EmpMapper(
       {
         name: 'Demo1DB.db',
         securityLevel: relationalStore.SecurityLevel.S1
@@ -667,8 +667,8 @@ export class EmpModel extends BaseMapper<Employee> {
   }
 
   // 数据库2
-  static getDemo2DB(): EmpModel {
-    return new EmpModel(
+  static getDemo2DB(): EmpMapper {
+    return new EmpMapper(
       {
         name: 'Demo2DB.db',
         securityLevel: relationalStore.SecurityLevel.S1
@@ -684,12 +684,12 @@ export class EmpModel extends BaseMapper<Employee> {
 
 ```
 import { Employee } from '../entity/Employee'
-import { EmpModel } from '../model/EmpModel'
+import { EmpMapper } from '../mapper/EmpMapper'
 
 @Entry
 @Component
 struct Index {
-  empModel = new EmpModel()
+  empMapper = new EmpMapper()
 
   build() {
 
@@ -698,14 +698,14 @@ struct Index {
       Button('事务成功').onClick(async (event: ClickEvent) => {
       
         // 获取一个db连接
-        const db = await this.empModel.getConnection()
+        const db = await this.empMapper.getConnection()
         try {
           //开启事务
           db.beginTransaction()
           const emp = new Employee()
           emp.name = '事务'
           // 将 db 传进去，保持所有操作在同一连接上
-          this.empModel.insert(emp, db)
+          this.empMapper.insert(emp, db)
           //提交事务
           db.commit()
         } catch (e) {
@@ -721,13 +721,13 @@ struct Index {
       Button('事务失败').onClick(async (event: ClickEvent) => {
       
         // 获取一个db连接
-        const db = await this.empModel.getConnection()
+        const db = await this.empMapper.getConnection()
         try {
           db.beginTransaction()
           const emp = new Employee()
           emp.name = '事务失败'
           // 将 db 传进去，保持所有操作在同一连接上
-          this.empModel.insert(emp, db)
+          this.empMapper.insert(emp, db)
           // 抛出异常，回滚事务
           throw new Error()
           //提交事务

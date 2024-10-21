@@ -9,15 +9,15 @@ const getRow = (res: relationalStore.ResultSet) => {
   return emp
 }
 
-export class EmpModel extends BaseMapper<Employee> {
-  private static empModel: EmpModel
+export class EmpMapper extends BaseMapper<Employee> {
+  private static mapper: EmpMapper
 
   // 单例模式
-  static getInstance(): EmpModel {
-    if (!EmpModel.empModel) {
-      EmpModel.empModel = new EmpModel()
+  static getInstance(): EmpMapper {
+    if (!EmpMapper.mapper) {
+      EmpMapper.mapper = new EmpMapper()
     }
-    return EmpModel.empModel
+    return EmpMapper.mapper
   }
 
   private constructor() {
