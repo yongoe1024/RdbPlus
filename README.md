@@ -44,11 +44,11 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 ```typescript
 export class Employee {
-  id: number
-  name: string
+   id: number
+   name: string
 
-  constructor() {
-  }
+   constructor() {
+   }
 }
 ```
 
@@ -68,21 +68,21 @@ import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
 
 const getRow = (res: relationalStore.ResultSet) => {
-  const emp = new Employee()
-  emp.id = res.getLong(res.getColumnIndex('id'))
-  emp.name = res.getString(res.getColumnIndex('name'))
-  return emp
+   const emp = new Employee()
+   emp.id = res.getLong(res.getColumnIndex('id'))
+   emp.name = res.getString(res.getColumnIndex('name'))
+   return emp
 }
 
 export class EmpMapper extends BaseMapper<Employee> {
-  constructor() {
-    super(
-      { tableName: 't_emp', primaryKey: 'id' },
-      getRow,
-      // 可选参数
-      { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
-    )
-  }
+   constructor() {
+      super(
+         { tableName: 't_emp', primaryKey: 'id' },
+         getRow,
+         // 可选参数
+         { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
+      )
+   }
 }
 ```
 
@@ -123,20 +123,20 @@ struct Index {
 
 ```javascript
 export class EmpMapper extends BaseMapper<Employee> {
-    ...其余省略
-    ...
+   ...其余省略
+   ...
 
-    async createTable() {
-        const db = await this.getConnection()
-        await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
-        await db.execDML(
-            `create table if not exists "t_emp" (
+   async createTable() {
+      const db = await this.getConnection()
+      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
+      await db.execDML(
+         `create table if not exists "t_emp" (
           id integer primary key autoincrement,
           name varchar(20)
       )`)
-        await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
-        await db.close()
-    }
+      await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
+      await db.close()
+   }
 }
 ```
 
@@ -246,7 +246,8 @@ this.empMapper.getById(14)
 
 ### insert
 
-插入一条记录
+插入一条记录  
+注：若插入的某个字段为空，可以设置为 `undefined或null`
 
 | 入参     | 说明       |
 |--------|----------|
@@ -266,6 +267,7 @@ this.empMapper.insert(emp)
 ### updateById
 
 根据主键ID更新数据
+注：不想更新的字段必须设置为`undefined`，其他值包括null，都会更新到数据库
 
 | 入参     | 说明              |
 |--------|-----------------|
@@ -404,8 +406,8 @@ this.empMapper.delete(new Wapper().eq('name', '111'))
 ```typescript
 // 更新`name`等于`张三`的数据，将`name`值更改为`李四`
 new Wapper()
-  .set('name', '李四')
-  .eq('name', '张三')
+   .set('name', '李四')
+   .eq('name', '张三')
 ```
 
 ### eq
@@ -590,7 +592,7 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 
 ```typescript
 new Wapper().eq('name', '111')
-  .or(new Wapper().eq('name', '222').eq('age', 18))
+   .or(new Wapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
@@ -605,8 +607,8 @@ name = '111' or ( name = '222' and age=18 )
 
 ```typescript
 new Wapper()
-  .eq('name', '111')
-  .and(new Wapper().notEq('name', '222'))
+   .eq('name', '111')
+   .and(new Wapper().notEq('name', '222'))
 ```
 
 生成SQL为
@@ -643,38 +645,38 @@ import { BaseMapper, MapperParam } from 'rdbplus'
 
 // 实现一个 getRow
 const getRow = (res: relationalStore.ResultSet) => {
-  const emp = new Employee()
-  emp.id = res.getLong(res.getColumnIndex('id'))
-  emp.name = res.getString(res.getColumnIndex('name'))
-  return emp
+   const emp = new Employee()
+   emp.id = res.getLong(res.getColumnIndex('id'))
+   emp.name = res.getString(res.getColumnIndex('name'))
+   return emp
 }
 
 export class EmpMapper extends BaseMapper<Employee> {
-  // 构造函数，仅接收参数，将参数传给super
-  private constructor(config: relationalStore.StoreConfig) {
-    super({ tableName: 't_emp', primaryKey: 'id' }, getRow, config)
-  }
+   // 构造函数，仅接收参数，将参数传给super
+   private constructor(config: relationalStore.StoreConfig) {
+      super({ tableName: 't_emp', primaryKey: 'id' }, getRow, config)
+   }
 
-  // 手动 new出EmpMapper
-  // 数据库1
-  static getDemo1DB(): EmpMapper {
-    return new EmpMapper(
-      {
-        name: 'Demo1DB.db',
-        securityLevel: relationalStore.SecurityLevel.S1
-      }
-    )
-  }
+   // 手动 new出EmpMapper
+   // 数据库1
+   static getDemo1DB(): EmpMapper {
+      return new EmpMapper(
+         {
+            name: 'Demo1DB.db',
+            securityLevel: relationalStore.SecurityLevel.S1
+         }
+      )
+   }
 
-  // 数据库2
-  static getDemo2DB(): EmpMapper {
-    return new EmpMapper(
-      {
-        name: 'Demo2DB.db',
-        securityLevel: relationalStore.SecurityLevel.S1
-      }
-    )
-  }
+   // 数据库2
+   static getDemo2DB(): EmpMapper {
+      return new EmpMapper(
+         {
+            name: 'Demo2DB.db',
+            securityLevel: relationalStore.SecurityLevel.S1
+         }
+      )
+   }
 }
 ```
 

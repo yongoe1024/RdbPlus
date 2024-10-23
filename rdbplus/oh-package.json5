@@ -1,6 +1,6 @@
 {
   "name": "rdbplus",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "一个sqlite的增强工具，无需编写sql代码，一行搞定增删改查，为简化开发、提高效率而生",
   "main": "Index.ets",
   "author": "yongoe",

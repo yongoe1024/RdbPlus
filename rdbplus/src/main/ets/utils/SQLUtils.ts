@@ -41,6 +41,11 @@ export class SQLUtils<T> {
     let fields: string[] = []
     let values: any[] = []
     Object.entries(obj).forEach(([k, v]) => {
+      if (v == undefined) {
+        fields.push(k)
+        values.push(null)
+        return
+      }
       fields.push(k)
       values.push(v)
     })
@@ -58,6 +63,9 @@ export class SQLUtils<T> {
     Object.entries(obj).forEach(([k, v]) => {
       if (k == this.primaryKey) {
         idValue = v
+        return
+      }
+      if (v == undefined) {
         return
       }
       fields.push(k)

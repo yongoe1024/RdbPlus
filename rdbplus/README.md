@@ -246,7 +246,8 @@ this.empMapper.getById(14)
 
 ### insert
 
-插入一条记录
+插入一条记录  
+注：若插入的某个字段为空，可以设置为 `undefined或null`  
 
 | 入参     | 说明       |
 |--------|----------|
@@ -266,6 +267,7 @@ this.empMapper.insert(emp)
 ### updateById
 
 根据主键ID更新数据
+注：不想更新的字段必须设置为`undefined`，其他值包括null，都会更新到数据库
 
 | 入参     | 说明              |
 |--------|-----------------|
