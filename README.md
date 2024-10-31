@@ -18,18 +18,19 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 ## 功能介绍
 
-| 函数名         | 介绍               |
-|-------------|------------------|
-| count       | 统计结果的行数          |
-| selectByMap | select查询，返回Map数组 |
-| list        | select查询         |
-| page        | select分页查询       |
-| getById     | 根据主键ID查询         |
-| insert      | 插入一条记录           |
-| updateById  | 根据主键ID更新数据       |
-| update      | 通过指定条件更新数据       |
-| deleteById  | 根据主键ID删除数据       |
-| delete      | 通过指定条件删除数据       |
+| 函数名            | 介绍                    |
+|----------------|-----------------------|
+| count          | 查询符合条件的记录总数           |
+| getList        | 查询符合条件的记录             |
+| getPage        | 分页查询符合条件的记录           |
+| getObject      | 查询符合条件的记录，返回对象数组      |
+| getObjectBySql | 输入SQL查询符合条件的记录，返回对象数组 |
+| getById        | 根据 ID 查询              |
+| insert         | 插入一条记录                |
+| updateById     | 根据 ID 更新数据            |
+| update         | 更新符合条件的记录             |
+| deleteById     | 根据 ID 删除              |
+| delete         | 删除符合条件的记录             |
 
 ## 引入教程
 
@@ -44,11 +45,11 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 ```typescript
 export class Employee {
-   id: number
-   name: string
+  id: number
+  name: string
 
-   constructor() {
-   }
+  constructor() {
+  }
 }
 ```
 
@@ -68,21 +69,21 @@ import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
 
 const getRow = (res: relationalStore.ResultSet) => {
-   const emp = new Employee()
-   emp.id = res.getLong(res.getColumnIndex('id'))
-   emp.name = res.getString(res.getColumnIndex('name'))
-   return emp
+  const emp = new Employee()
+  emp.id = res.getLong(res.getColumnIndex('id'))
+  emp.name = res.getString(res.getColumnIndex('name'))
+  return emp
 }
 
 export class EmpMapper extends BaseMapper<Employee> {
-   constructor() {
-      super(
-         { tableName: 't_emp', primaryKey: 'id' },
-         getRow,
-         // 可选参数
-         { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
-      )
-   }
+  constructor() {
+    super(
+      { tableName: 't_emp', primaryKey: 'id' },
+      getRow,
+      // 可选参数
+      { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
+    )
+  }
 }
 ```
 
@@ -100,9 +101,9 @@ struct Index {
   {
     Button('查询全部数据').onClick(() => {
        // 查询全部
-       let list:1 Employee[]  = await this.empMapper.list(new Wapper())
+       let list:1 Employee[]  = await this.empMapper.getList(new Wapper())
        // 条件查询
-       let list2: Employee[]  = await this.empMapper.list(new Wapper().eq('name', '李四'))
+       let list2: Employee[]  = await this.empMapper.getList(new Wapper().eq('name', '李四'))
        // 统计总数
        const num:number = await this.empMapper.count(new Wapper())
     })
@@ -123,20 +124,20 @@ struct Index {
 
 ```javascript
 export class EmpMapper extends BaseMapper<Employee> {
-   ...其余省略
-   ...
+    ...其余省略
+    ...
 
-   async createTable() {
-      const db = await this.getConnection()
-      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
-      await db.execDML(
-         `create table if not exists "t_emp" (
-          id integer primary key autoincrement,
-          name varchar(20)
-      )`)
-      await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
-      await db.close()
-   }
+    async createTable() {
+        const db = await this.getConnection()
+        await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
+        await db.execDML(
+            `create table if not exists "t_emp" (
+             id integer primary key autoincrement,
+             name varchar(20)
+        )`)
+        await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
+        await db.close()
+    }
 }
 ```
 
@@ -146,11 +147,12 @@ export class EmpMapper extends BaseMapper<Employee> {
 
 ### count
 
-统计结果的行数
+查询符合条件的记录总数  
+返回值： 符合条件的记录总数。
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 搜索条件 |
+| wapper: Wapper | 查询条件 |
 
 | 返回值    | 说明  |
 |--------|-----|
@@ -161,26 +163,47 @@ export class EmpMapper extends BaseMapper<Employee> {
 const num:number = await this.empMapper.count(new Wapper())
 ```
 
-### selectByMap
+### getObject
 
-查询，返回Map数组
+查询符合条件的记录  
+返回值： 查询结果，一个对象类型的数组
 
 | 入参             | 说明   |
 |----------------|------|
 | wapper: Wapper | 搜索条件 |
 
-| 返回值                                      | 说明    |
-|------------------------------------------|-------|
-| Map<string, relationalStore.ValueType>[] | Map数组 |
+| 返回值         | 说明   |
+|-------------|------|
+| AnyObject[] | 对象数组 |
 
 ```typescript
-// 查询name等于111的数据，封装成Map返回
-const mapList = await this.empMapper.selectByMap(new Wapper().eq('name', '111'))
+// 查询name等于111的数据
+const objList = await this.empMapper.getObject(new Wapper().eq('name', '111'))
 ```
 
-### list
+### getObjectBySql
 
-查询，返回对象数组
+通过SQL，查询符合条件的记录  
+返回值： 查询结果，一个对象类型的数组
+
+| 入参                                  | 说明    |
+|-------------------------------------|-------|
+| sql: string                         | sql语句 |
+| params: relationalStore.ValueType[] | 占位符参数 |
+
+| 返回值         | 说明   |
+|-------------|------|
+| AnyObject[] | 对象数组 |
+
+```typescript
+// 统计行数
+const res = await this.mapper.getObjectBySql('select count(*) from t_emp', [])
+```
+
+### getList
+
+查询符合条件的记录  
+返回值： 查询结果，泛型T的数组
 
 | 入参             | 说明   |
 |----------------|------|
@@ -192,12 +215,13 @@ const mapList = await this.empMapper.selectByMap(new Wapper().eq('name', '111'))
 
 ```typescript
 // 查询name等于111的数据，返回数组
-const list = await this.empMapper.list(new Wapper().eq('name', '111'))
+const list = await this.empMapper.getList(new Wapper().eq('name', '111'))
 ```
 
-### page
+### getPage
 
-分页查询，返回Page（分页对象）
+分页查询符合条件的记录  
+返回值：分页查询结果，包含记录列表和总记录数
 
 | 入参             | 说明   |
 |----------------|------|
@@ -216,7 +240,7 @@ const list = await this.empMapper.list(new Wapper().eq('name', '111'))
 
 ```typescript
 // 查询第一页的数据，返回Page对象
-const page = await this.empMapper.page(1, 10)
+const page = await this.empMapper.getPage(1, 10)
 // 总数
 const total = page.total
 // 当前页
@@ -229,7 +253,8 @@ const record = page.record
 
 ### getById
 
-根据主键ID查询
+根据主键ID查询  
+返回值： 查询结果，可能是undefined或泛型T的对象
 
 | 入参            | 说明  |
 |---------------|-----|
@@ -246,7 +271,8 @@ this.empMapper.getById(14)
 
 ### insert
 
-插入一条记录  
+插入一条记录
+返回值：void，失败则抛出异常
 注：若插入的某个字段为空，可以设置为 `undefined或null`
 
 | 入参     | 说明       |
@@ -266,7 +292,8 @@ this.empMapper.insert(emp)
 
 ### updateById
 
-根据主键ID更新数据
+根据 ID ，更新符合条件的记录
+返回值：void，失败则抛出异常
 注：不想更新的字段必须设置为`undefined`，其他值包括null，都会更新到数据库
 
 | 入参     | 说明              |
@@ -287,7 +314,8 @@ this.empMapper.updateById(emp)
 
 ### update
 
-通过指定条件更新数据
+通过指定条件更新数据  
+返回值：void，失败则抛出异常
 
 | 入参             | 说明   |
 |----------------|------|
@@ -304,7 +332,8 @@ this.empMapper.update(new Wapper().set('name', '李四').eq('name', '张三'))
 
 ### deleteById
 
-根据主键ID删除数据
+根据 ID ，删除数据  
+返回值：void，失败则抛出异常
 
 | 入参            | 说明  |
 |---------------|-----|
@@ -321,7 +350,8 @@ this.empMapper.deleteById(5)
 
 ### delete
 
-通过指定条件删除数据
+通过指定条件删除数据  
+返回值：void，失败则抛出异常
 
 | 入参             | 说明   |
 |----------------|------|
@@ -338,12 +368,10 @@ this.empMapper.delete(new Wapper().eq('name', '111'))
 
 ### getConnection
 
-获取一个数据库连接`Connection`对象，直接进行SQL语句的调用  
+获取一个数据库的连接对象`Connection`，可以直接进行SQL语句的调用  
 参考上面的`建表、连接查询等复杂SQl，采用手写SQL方法`
 
-#### Connection 介绍
-
-##### init
+#### init
 
 获取一个新的数据库连接
 
@@ -389,11 +417,11 @@ this.empMapper.delete(new Wapper().eq('name', '111'))
 
 提交事务
 
-### rollBack
+#### rollBack
 
 回滚事务
 
-### close
+#### close
 
 关闭当前的Connection连接
 
@@ -406,8 +434,8 @@ this.empMapper.delete(new Wapper().eq('name', '111'))
 ```typescript
 // 更新`name`等于`张三`的数据，将`name`值更改为`李四`
 new Wapper()
-   .set('name', '李四')
-   .eq('name', '张三')
+  .set('name', '李四')
+  .eq('name', '张三')
 ```
 
 ### eq
@@ -592,7 +620,7 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 
 ```typescript
 new Wapper().eq('name', '111')
-   .or(new Wapper().eq('name', '222').eq('age', 18))
+  .or(new Wapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
@@ -607,8 +635,8 @@ name = '111' or ( name = '222' and age=18 )
 
 ```typescript
 new Wapper()
-   .eq('name', '111')
-   .and(new Wapper().notEq('name', '222'))
+  .eq('name', '111')
+  .and(new Wapper().notEq('name', '222'))
 ```
 
 生成SQL为
@@ -621,7 +649,7 @@ name = '111' and ( name != '222' )
 
 默认查询为： `select *`
 调用select函数，将默认的 `*` 更改为指定内容  
-注：若添加了额外内容，例如聚合函数、字段别名，建议使用`selectByMap`方法，将结果从Map中取出
+注：若添加了额外内容，例如聚合函数、字段别名，建议使用`getObject`方法，将结果从对象中取出（getObjectBySql也可以）
 
 ```typescript
 //指定字段

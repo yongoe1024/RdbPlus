@@ -25,7 +25,7 @@ struct Index {
       })
 
       Button('page').onClick(async () => {
-        const page = await this.mapper.page(1, 10, new Wapper())
+        const page = await this.mapper.getPage(1, 10, new Wapper())
         // 总数
         const total = page.total
         // 当前页
@@ -37,64 +37,63 @@ struct Index {
         showDialog(JSON.stringify(page))
       })
 
-      Button('map').onClick(async () => {
-        const res = await this.mapper.selectByMap(new Wapper().eq('name', '111'))
-        let str = ''
-        res.forEach((value) => {
-          value.forEach((value, key) => {
-            str += `${key}: ${value}\n`
-          });
-        })
-        showDialog(str)
+      Button('得到对象').onClick(async () => {
+        const res = await this.mapper.getObject(new Wapper().eq('name', '111'))
+        showDialog(JSON.stringify(res))
+      })
+
+      Button('sql得到对象').onClick(async () => {
+        const res = await this.mapper.getObjectBySql('select  count(*) from t_emp', [])
+        showDialog(JSON.stringify(res))
       })
 
       Button('等于').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().eq('name', '111'))
+        const res = await this.mapper.getList(new Wapper().eq('name', '111'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('不等于').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().notEq('name', '111'))
+        const res = await this.mapper.getList(new Wapper().notEq('name', '111'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('in').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().in('name', ['111', '222']))
+        const res = await this.mapper.getList(new Wapper().in('name', ['111', '222']))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('notIn').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().notIn('name', ['111', '222']))
+        const res = await this.mapper.getList(new Wapper().notIn('name', ['111', '222']))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('lt').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().lt('name', '333'))
+        const res = await this.mapper.getList(new Wapper().lt('name', '333'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('lte').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().lte('name', '333'))
+        const res = await this.mapper.getList(new Wapper().lte('name', '333'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('gt').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().gt('name', '333'))
+        const res = await this.mapper.getList(new Wapper().gt('name', '333'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('gte').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().gte('name', '333'))
+        const res = await this.mapper.getList(new Wapper().gte('name', '333'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('between').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().between('name', '333', '555'))
+        const res = await this.mapper.getList(new Wapper().between('name', '333', '555'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('notBetween').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().notBetween('name', '333', '555'))
+        const res = await this.mapper.getList(new Wapper().notBetween('name', '333', '555'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
@@ -104,32 +103,32 @@ struct Index {
         .color('#000')
 
       Button('like').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().like('name', '333%'))
+        const res = await this.mapper.getList(new Wapper().like('name', '333%'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('notLike').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().notLike('name', '333%'))
+        const res = await this.mapper.getList(new Wapper().notLike('name', '333%'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('isNull').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().isNull('name'))
+        const res = await this.mapper.getList(new Wapper().isNull('name'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('isNotNull').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().isNotNull('name'))
+        const res = await this.mapper.getList(new Wapper().isNotNull('name'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('orderByAsc').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().orderByAsc('id'))
+        const res = await this.mapper.getList(new Wapper().orderByAsc('id'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('orderByDesc').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().orderByDesc('id'))
+        const res = await this.mapper.getList(new Wapper().orderByDesc('id'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
@@ -139,21 +138,21 @@ struct Index {
         .color('#000')
 
       Button('groupBy').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().groupBy('name'))
+        const res = await this.mapper.getList(new Wapper().groupBy('name'))
         showDialog(JSON.stringify(res, null, 2))
 
       })
       Button('having').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().groupBy('name').having(`name != '333'`))
+        const res = await this.mapper.getList(new Wapper().groupBy('name').having(`name != '333'`))
         showDialog(JSON.stringify(res, null, 2))
       })
       Button('or').onClick(async () => {
-        const res = await this.mapper.list(new Wapper().eq('name', '111').or(new Wapper().eq('name', '222')))
+        const res = await this.mapper.getList(new Wapper().eq('name', '111').or(new Wapper().eq('name', '222')))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Button('and').onClick(async () => {
-        const res = await this.mapper.list(new Wapper()
+        const res = await this.mapper.getList(new Wapper()
           .eq('name', '111')
           .and(new Wapper().notEq('name', 222))
         )
@@ -229,12 +228,13 @@ struct Index {
           // 将 db 传进去，保持所有操作在同一连接上
           this.mapper.insert(emp, db)
           // 抛出异常
-          throw new Error()
+          throw new Error('我的异常')
           //提交事务
           db.commit()
         } catch (e) {
           // 回滚
           db.rollBack()
+          console.error(e.message)
         } finally {
           // 关闭连接
           db.close()

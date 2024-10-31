@@ -3,6 +3,7 @@ import { SQLUtils } from "./utils/SQLUtils";
 import { Connection } from "./utils/Connection";
 import { Wapper } from "./Wapper";
 import { Page } from "./Page";
+import { AnyObject } from "./AnyObject";
 
 export class BaseMapper<T> {
   private config: relationalStore.StoreConfig
@@ -51,11 +52,11 @@ export class BaseMapper<T> {
   }
 
   /**
-   * 查询得到Map
+   * 查询得到对象
    * @param wapper 查询条件
-   * @returns Map
+   * @returns 对象数组
    */
-  async selectByMap(wapper: Wapper, db?: Connection): Promise<Map<string, relationalStore.ValueType>[]> {
+  async getObject(wapper: Wapper, db?: Connection): Promise<AnyObject[]> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
@@ -67,13 +68,45 @@ export class BaseMapper<T> {
       sql, wapper.getWhereValue()
     )
     const columnNames: Array<string> = res.columnNames
-    const list: Map<string, relationalStore.ValueType>[] = []
+    const list: AnyObject[] = []
     while (res.goToNextRow()) {
-      const map: Map<string, relationalStore.ValueType> = new Map()
+      let obj: AnyObject = {}
       columnNames.forEach((name) => {
-        map.set(name, res.getValue(res.getColumnIndex(name)))
+        obj[name] = res.getValue(res.getColumnIndex(name))
       })
-      list.push(map)
+      list.push(obj)
+    }
+    res.close()
+    if (isClose) {
+      await db.close()
+    }
+    return list
+  }
+
+  /**
+   * 传入SQL，查询得到对象
+   * @param sql sql语句
+   * @param params 占位符参数
+   * @returns 对象数组
+   */
+  async getObjectBySql(sql: string, params: relationalStore.ValueType[], db?: Connection): Promise<AnyObject[]> {
+    let isClose: boolean = true
+    if (db == undefined) {
+      db = await this.getConnection()
+    } else {
+      isClose = false
+    }
+    const res: relationalStore.ResultSet = await db.execDQL(
+      sql, params
+    )
+    const columnNames: Array<string> = res.columnNames
+    const list: AnyObject[] = []
+    while (res.goToNextRow()) {
+      let obj: AnyObject = {}
+      columnNames.forEach((name) => {
+        obj[name] = res.getValue(res.getColumnIndex(name))
+      })
+      list.push(obj)
     }
     res.close()
     if (isClose) {
@@ -87,7 +120,7 @@ export class BaseMapper<T> {
    * @param wapper 查询条件
    * @returns 实体类的数组
    */
-  async list(wapper: Wapper, db?: Connection): Promise<T[]> {
+  async getList(wapper: Wapper, db?: Connection): Promise<T[]> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
@@ -117,7 +150,7 @@ export class BaseMapper<T> {
    * @param wapper 查询条件
    * @returns Page类
    */
-  async page(current: number, size: number, wapper: Wapper, db?: Connection): Promise<Page<T>> {
+  async getPage(current: number, size: number, wapper: Wapper, db?: Connection): Promise<Page<T>> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
