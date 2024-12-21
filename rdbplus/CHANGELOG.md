@@ -1,4 +1,8 @@
 # 版本记录
+## 1.0.7
+以release模式构建HAR
+根据文档 https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/ide-hvigor-build-har-V5#section19788284410
+将本项目工程级build-profile.json5的useNormalizedOHMUrl为false，
 
 ## 1.0.6
 
