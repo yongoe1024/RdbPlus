@@ -3,7 +3,7 @@ type ValueType = null | number | string | boolean | Uint8Array | Float32Array | 
 /**
  * 构造查询参数
  */
-export class Wapper {
+export class Wrapper {
   private selectSql: string | undefined = undefined
   private groupSql: string | undefined = undefined
   private havingSql: string | undefined = undefined
@@ -17,7 +17,7 @@ export class Wapper {
    * update set 修改某字段
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
   set(field: string, value: ValueType) {
     this.updateList.push(`${field} = ?`)
@@ -29,9 +29,9 @@ export class Wapper {
    * 等于
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  eq(field: string, value: ValueType): Wapper {
+  eq(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} = ?`)
     this.valueList.push(value)
     return this
@@ -41,9 +41,9 @@ export class Wapper {
    * 不等于
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  notEq(field: string, value: ValueType): Wapper {
+  notEq(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} != ?`)
     this.valueList.push(value)
     return this
@@ -53,9 +53,9 @@ export class Wapper {
    * 字段的值，在给定的集合中
    * @param field 字段
    * @param value 值的数组
-   * @returns Wapper
+   * @returns Wrapper
    */
-  in(field: string, value: ValueType[]): Wapper {
+  in(field: string, value: ValueType[]): Wrapper {
     const str = new Array(value.length).fill('?').join(',')
     this.whereList.push(`and ${field} in (${str})`)
     Array.prototype.push.apply(this.valueList, value);
@@ -66,9 +66,9 @@ export class Wapper {
    * 字段的值，不在给定的集合中
    * @param field 字段
    * @param value 值的数组
-   * @returns Wapper
+   * @returns Wrapper
    */
-  notIn(field: string, value: ValueType[]): Wapper {
+  notIn(field: string, value: ValueType[]): Wrapper {
     const str = new Array(value.length).fill('?').join(',')
     this.whereList.push(`and ${field} not in (${str})`)
     Array.prototype.push.apply(this.valueList, value);
@@ -79,9 +79,9 @@ export class Wapper {
    * 小于
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  lt(field: string, value: ValueType): Wapper {
+  lt(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} < ?`)
     this.valueList.push(value)
     return this
@@ -91,9 +91,9 @@ export class Wapper {
    * 小于等于
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  lte(field: string, value: ValueType): Wapper {
+  lte(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} <= ?`)
     this.valueList.push(value)
     return this
@@ -103,9 +103,9 @@ export class Wapper {
    * 大于
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  gt(field: string, value: ValueType): Wapper {
+  gt(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} > ?`)
     this.valueList.push(value)
     return this
@@ -115,9 +115,9 @@ export class Wapper {
    * 大于等于
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  gte(field: string, value: ValueType): Wapper {
+  gte(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} >= ?`)
     this.valueList.push(value)
     return this
@@ -128,9 +128,9 @@ export class Wapper {
    * @param field 字段
    * @param start 起始值
    * @param end 结束值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  between(field: string, start: ValueType, end: ValueType): Wapper {
+  between(field: string, start: ValueType, end: ValueType): Wrapper {
     this.whereList.push(`and ${field} between ? and ?`)
     this.valueList.push(start)
     this.valueList.push(end)
@@ -142,9 +142,9 @@ export class Wapper {
    * @param field 字段
    * @param start 起始值
    * @param end 结束值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  notBetween(field: string, start: ValueType, end: ValueType): Wapper {
+  notBetween(field: string, start: ValueType, end: ValueType): Wrapper {
     this.whereList.push(`and ${field} not between ? and ?`)
     this.valueList.push(start)
     this.valueList.push(end)
@@ -155,9 +155,9 @@ export class Wapper {
    * 单个字段的模糊匹配条件
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  like(field: string, value: ValueType): Wapper {
+  like(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} like ?`)
     this.valueList.push(value)
     return this
@@ -167,9 +167,9 @@ export class Wapper {
    * 单个字段的非模糊匹配条件
    * @param field 字段
    * @param value 值
-   * @returns Wapper
+   * @returns Wrapper
    */
-  notLike(field: string, value: ValueType): Wapper {
+  notLike(field: string, value: ValueType): Wrapper {
     this.whereList.push(`and ${field} not like ?`)
     this.valueList.push(value)
     return this
@@ -178,9 +178,9 @@ export class Wapper {
   /**
    * 单个字段为null
    * @param field 字段
-   * @returns Wapper
+   * @returns Wrapper
    */
-  isNull(field: string): Wapper {
+  isNull(field: string): Wrapper {
     this.whereList.push(`and ${field} is null`)
     return this
   }
@@ -188,9 +188,9 @@ export class Wapper {
   /**
    * 单个字段不为null
    * @param field 字段
-   * @returns Wapper
+   * @returns Wrapper
    */
-  isNotNull(field: string): Wapper {
+  isNotNull(field: string): Wrapper {
     this.whereList.push(`and ${field} is not null`)
     return this
   }
@@ -198,9 +198,9 @@ export class Wapper {
   /**
    * 对某字段排序-升序。可以调用多次，按顺序拼接SQL
    * @param field 字段
-   * @returns Wapper
+   * @returns Wrapper
    */
-  orderByAsc(field: string): Wapper {
+  orderByAsc(field: string): Wrapper {
     this.orderList.push(`${field} asc`)
     return this
   }
@@ -208,9 +208,9 @@ export class Wapper {
   /**
    * 对某字段排序-降序。可以调用多次，按顺序拼接SQL
    * @param field 字段
-   * @returns Wapper
+   * @returns Wrapper
    */
-  orderByDesc(field: string): Wapper {
+  orderByDesc(field: string): Wrapper {
     this.orderList.push(`${field} desc`)
     return this
   }
@@ -218,9 +218,9 @@ export class Wapper {
   /**
    * 分组查询
    * @param fields 可以传多个字段
-   * @returns Wapper
+   * @returns Wrapper
    */
-  groupBy(...fields: string[]): Wapper {
+  groupBy(...fields: string[]): Wrapper {
     const column = fields.join(',')
     this.groupSql = `group by ${column}`
     return this
@@ -229,45 +229,45 @@ export class Wapper {
   /**
    * 过滤分组后的结果
    * @param sql having后面的sql条件
-   * @returns Wapper
+   * @returns Wrapper
    */
-  having(sql: string): Wapper {
+  having(sql: string): Wrapper {
     this.havingSql = `having ${sql}`
     return this
   }
 
   /**
-   * 在查询条件中添加 OR 逻辑，传入的wapper仅用来拼接where条件
-   * @param wapper 一个新的Wapper
-   * @returns Wapper
+   * 在查询条件中添加 OR 逻辑，传入的wrapper仅用来拼接where条件
+   * @param wrapper 一个新的Wrapper
+   * @returns Wrapper
    */
-  or(wapper: Wapper): Wapper {
+  or(wrapper: Wrapper): Wrapper {
     this.whereList.push('or (1=1 ')
-    Array.prototype.push.apply(this.whereList, wapper.whereList);
+    Array.prototype.push.apply(this.whereList, wrapper.whereList);
     this.whereList.push(')')
-    Array.prototype.push.apply(this.valueList, wapper.valueList);
+    Array.prototype.push.apply(this.valueList, wrapper.valueList);
     return this
   }
 
   /**
-   * 在查询条件中添加 and 逻辑，传入的wapper仅用来拼接where条件
-   * @param wapper 一个新的Wapper
-   * @returns Wapper
+   * 在查询条件中添加 and 逻辑，传入的wrapper仅用来拼接where条件
+   * @param wrapper 一个新的Wrapper
+   * @returns Wrapper
    */
-  and(wapper: Wapper): Wapper {
+  and(wrapper: Wrapper): Wrapper {
     this.whereList.push('and (1=1 ')
-    Array.prototype.push.apply(this.whereList, wapper.whereList);
+    Array.prototype.push.apply(this.whereList, wrapper.whereList);
     this.whereList.push(')')
-    Array.prototype.push.apply(this.valueList, wapper.valueList);
+    Array.prototype.push.apply(this.valueList, wrapper.valueList);
     return this
   }
 
   /**
    * 仅查询指定字段的数据
    * @param sql sql语句
-   * @returns Wapper
+   * @returns Wrapper
    */
-  select(sql: string): Wapper {
+  select(sql: string): Wrapper {
     this.selectSql = sql
     return this
   }

@@ -1,5 +1,9 @@
 # 版本记录
 
+## 2.0.0
+1. 修改命名 wapper -> wrapper，优化文档
+2. 使用最新API 5.0.3(15)
+
 ## 1.0.8
 由于DevEco Studio NEXT Beta1（5.0.3.800）版本开始，项目useNormalizedOHMUrl字段默认为true  
 为了保持统一，rdbplus也设置为true，并构建字节码格式的HAR  

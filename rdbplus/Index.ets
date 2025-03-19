@@ -1,6 +1,6 @@
 export { BaseMapper, MapperParam } from './src/main/ets/BaseMapper'
 
-export { Wapper } from './src/main/ets/Wapper'
+export { Wrapper } from './src/main/ets/Wrapper'
 
 export { Connection } from './src/main/ets/utils/Connection'
 

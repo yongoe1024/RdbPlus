@@ -1,7 +1,7 @@
 import { relationalStore, ValueType } from "@kit.ArkData";
 import { SQLUtils } from "./utils/SQLUtils";
 import { Connection } from "./utils/Connection";
-import { Wapper } from "./Wapper";
+import { Wrapper } from "./Wrapper";
 import { Page } from "./Page";
 import { AnyObject } from "./AnyObject";
 
@@ -28,19 +28,19 @@ export class BaseMapper<T> {
 
   /**
    * 统计行数
-   * @param wapper 查询条件
+   * @param wrapper 查询条件
    * @returns 行数
    */
-  async count(wapper: Wapper, db?: Connection): Promise<number> {
+  async count(wrapper: Wrapper, db?: Connection): Promise<number> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.count(wapper.getWhere(), wapper.getGroup(), wapper.getOrder())
+    const sql = this.sqlUtils.count(wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wapper.getWhereValue()
+      sql, wrapper.getWhereValue()
     )
     res.goToFirstRow()
     const count: number = res.getLong(0)
@@ -53,19 +53,19 @@ export class BaseMapper<T> {
 
   /**
    * 查询得到对象
-   * @param wapper 查询条件
+   * @param wrapper 查询条件
    * @returns 对象数组
    */
-  async getObject(wapper: Wapper, db?: Connection): Promise<AnyObject[]> {
+  async getObject(wrapper: Wrapper, db?: Connection): Promise<AnyObject[]> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.list(wapper.getSelect(), wapper.getWhere(), wapper.getGroup(), wapper.getOrder())
+    const sql = this.sqlUtils.list(wrapper.getSelect(), wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wapper.getWhereValue()
+      sql, wrapper.getWhereValue()
     )
     const columnNames: Array<string> = res.columnNames
     const list: AnyObject[] = []
@@ -117,19 +117,19 @@ export class BaseMapper<T> {
 
   /**
    * 查询list
-   * @param wapper 查询条件
+   * @param wrapper 查询条件
    * @returns 实体类的数组
    */
-  async getList(wapper: Wapper, db?: Connection): Promise<T[]> {
+  async getList(wrapper: Wrapper, db?: Connection): Promise<T[]> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.list(wapper.getSelect(), wapper.getWhere(), wapper.getGroup(), wapper.getOrder())
+    const sql = this.sqlUtils.list(wrapper.getSelect(), wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wapper.getWhereValue()
+      sql, wrapper.getWhereValue()
     )
     const list: T[] = []
     while (res.goToNextRow()) {
@@ -147,21 +147,21 @@ export class BaseMapper<T> {
    * 分页查询
    * @param current 页数
    * @param size 每页大小
-   * @param wapper 查询条件
+   * @param wrapper 查询条件
    * @returns Page类
    */
-  async getPage(current: number, size: number, wapper: Wapper, db?: Connection): Promise<Page<T>> {
+  async getPage(current: number, size: number, wrapper: Wrapper, db?: Connection): Promise<Page<T>> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const count: number = await this.count(wapper, db)
+    const count: number = await this.count(wrapper, db)
     const sql =
-      this.sqlUtils.page(wapper.getSelect(), wapper.getWhere(), wapper.getGroup(), wapper.getOrder(), current, size)
+      this.sqlUtils.page(wrapper.getSelect(), wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder(), current, size)
     const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wapper.getWhereValue()
+      sql, wrapper.getWhereValue()
     )
     const list: T[] = []
     while (res.goToNextRow()) {
@@ -226,19 +226,19 @@ export class BaseMapper<T> {
 
   /**
    * 更新，手动set更新字段
-   * @param wapper 更新条件
+   * @param wrapper 更新条件
    * @returns 无返回值
    */
-  async update(wapper: Wapper, db?: Connection): Promise<void> {
+  async update(wrapper: Wrapper, db?: Connection): Promise<void> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.update(wapper.getUpdate(), wapper.getWhere())
+    const sql = this.sqlUtils.update(wrapper.getUpdate(), wrapper.getWhere())
     await db.execDML(
-      sql, [...wapper.getUpdateValue(), ...wapper.getWhereValue()]
+      sql, [...wrapper.getUpdateValue(), ...wrapper.getWhereValue()]
     )
     if (isClose) {
       await db.close()
@@ -268,19 +268,19 @@ export class BaseMapper<T> {
 
   /**
    * 条件删除
-   * @param wapper 删除条件
+   * @param wrapper 删除条件
    * @returns 无返回值
    */
-  async delete(wapper: Wapper, db?: Connection): Promise<void> {
+  async delete(wrapper: Wrapper, db?: Connection): Promise<void> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.delete(wapper.getWhere())
+    const sql = this.sqlUtils.delete(wrapper.getWhere())
     await db.execDML(
-      sql, wapper.getWhereValue()
+      sql, wrapper.getWhereValue()
     )
     if (isClose) {
       await db.close()

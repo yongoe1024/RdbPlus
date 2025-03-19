@@ -4,6 +4,11 @@
 
 这是一个sqlite的增强工具，无需编写sql代码，通过继承BaseMapper类，一行搞定增删改查，为简化开发、提高效率而生。（类似Mybatis-plus）
 
+## 版本说明
+2.0.0  
+1. 修改命名 wapper->wrapper
+2. 使用API 5.0.3(15)
+
 ## 下载安装
 
 `ohpm i rdbplus`  
@@ -41,7 +46,8 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 ### 第一步：创建实体类
 
-推荐在`src/main/ets/entity`路径中，创建ts文件`Employee.ts`
+推荐在`src/main/ets/entity`路径中，创建ts文件`Employee.ts`(可以不写默认值)  
+！！！字段名要与数据库字段一一对应，完全一致！！！
 
 ```typescript
 export class Employee {
@@ -101,11 +107,11 @@ struct Index {
   {
     Button('查询全部数据').onClick(() => {
        // 查询全部
-       let list:1 Employee[]  = await this.empMapper.getList(new Wapper())
+       let list:1 Employee[]  = await this.empMapper.getList(new Wrapper())
        // 条件查询
-       let list2: Employee[]  = await this.empMapper.getList(new Wapper().eq('name', '李四'))
+       let list2: Employee[]  = await this.empMapper.getList(new Wrapper().eq('name', '李四'))
        // 统计总数
-       const num:number = await this.empMapper.count(new Wapper())
+       const num:number = await this.empMapper.count(new Wrapper())
     })
   }
 }
@@ -124,9 +130,12 @@ struct Index {
 
 ```javascript
 export class EmpMapper extends BaseMapper<Employee> {
+    /**
     ...其余省略
     ...
-
+     */
+   
+   
     async createTable() {
         const db = await this.getConnection()
         await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
@@ -152,7 +161,7 @@ export class EmpMapper extends BaseMapper<Employee> {
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 查询条件 |
+| wrapper: Wrapper | 查询条件 |
 
 | 返回值    | 说明  |
 |--------|-----|
@@ -160,7 +169,7 @@ export class EmpMapper extends BaseMapper<Employee> {
 
 ```typescript
 // 统计总数
-const num:number = await this.empMapper.count(new Wapper())
+const num:number = await this.empMapper.count(new Wrapper())
 ```
 
 ### getObject
@@ -170,7 +179,7 @@ const num:number = await this.empMapper.count(new Wapper())
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 搜索条件 |
+| wrapper: Wrapper | 搜索条件 |
 
 | 返回值         | 说明   |
 |-------------|------|
@@ -178,7 +187,7 @@ const num:number = await this.empMapper.count(new Wapper())
 
 ```typescript
 // 查询name等于111的数据
-const objList = await this.empMapper.getObject(new Wapper().eq('name', '111'))
+const objList = await this.empMapper.getObject(new Wrapper().eq('name', '111'))
 ```
 
 ### getObjectBySql
@@ -207,7 +216,7 @@ const res = await this.mapper.getObjectBySql('select count(*) from t_emp', [])
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 搜索条件 |
+| wrapper: Wrapper | 搜索条件 |
 
 | 返回值 | 说明     |
 |-----|--------|
@@ -215,7 +224,7 @@ const res = await this.mapper.getObjectBySql('select count(*) from t_emp', [])
 
 ```typescript
 // 查询name等于111的数据，返回数组
-const list = await this.empMapper.getList(new Wapper().eq('name', '111'))
+const list = await this.empMapper.getList(new Wrapper().eq('name', '111'))
 ```
 
 ### getPage
@@ -225,7 +234,7 @@ const list = await this.empMapper.getList(new Wapper().eq('name', '111'))
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 搜索条件 |
+| wrapper: Wrapper | 搜索条件 |
 
 | 返回值     | 说明     |
 |---------|--------|
@@ -319,7 +328,7 @@ this.empMapper.updateById(emp)
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 更新条件 |
+| wrapper: Wrapper | 更新条件 |
 
 | 返回值  | 说明       |
 |------|----------|
@@ -327,7 +336,7 @@ this.empMapper.updateById(emp)
 
 ```typescript
 // 将name等于张三的数据，改为name等于李四
-this.empMapper.update(new Wapper().set('name', '李四').eq('name', '张三'))
+this.empMapper.update(new Wrapper().set('name', '李四').eq('name', '张三'))
 ```
 
 ### deleteById
@@ -355,7 +364,7 @@ this.empMapper.deleteById(5)
 
 | 入参             | 说明   |
 |----------------|------|
-| wapper: Wapper | 删除条件 |
+| wrapper: Wrapper | 删除条件 |
 
 | 返回值  | 说明       |
 |------|----------|
@@ -363,7 +372,7 @@ this.empMapper.deleteById(5)
 
 ```typescript
 // 删除name等于111的数据
-this.empMapper.delete(new Wapper().eq('name', '111'))
+this.empMapper.delete(new Wrapper().eq('name', '111'))
 ```
 
 ### getConnection
@@ -433,7 +442,7 @@ this.empMapper.delete(new Wapper().eq('name', '111'))
 
 ```typescript
 // 更新`name`等于`张三`的数据，将`name`值更改为`李四`
-new Wapper()
+new Wrapper()
   .set('name', '李四')
   .eq('name', '张三')
 ```
@@ -444,7 +453,7 @@ new Wapper()
 
 ```typescript
 // 查询`name`等于`王二`，并且`age`为`18`的数据
-new Wapper().eq('name', '王二').eq('age', 18)
+new Wrapper().eq('name', '王二').eq('age', 18)
 ```
 
 ### notEq
@@ -453,7 +462,7 @@ new Wapper().eq('name', '王二').eq('age', 18)
 
 ```typescript
 // 查询`name`不等于`王二`的数据
-new Wapper().notEq('name', '王二')
+new Wrapper().notEq('name', '王二')
 ```
 
 ### lt
@@ -462,7 +471,7 @@ new Wapper().notEq('name', '王二')
 
 ```typescript
 // 查询`age`小于`50`的数据
-new Wapper().lt('age', 50)
+new Wrapper().lt('age', 50)
 ```
 
 ### lte
@@ -471,7 +480,7 @@ new Wapper().lt('age', 50)
 
 ```typescript
 // 查询`age`小于等于`50`的数据
-new Wapper().lte('age', 50)
+new Wrapper().lte('age', 50)
 ```
 
 ### gt
@@ -480,7 +489,7 @@ new Wapper().lte('age', 50)
 
 ```typescript
 // 查询`age`大于`50`的数据
-new Wapper().gt('age', 50)
+new Wrapper().gt('age', 50)
 ```
 
 ### gte
@@ -489,7 +498,7 @@ new Wapper().gt('age', 50)
 
 ```typescript
 // 查询`age`大于等于`50`的数据
-new Wapper().gte('age', 50)
+new Wrapper().gte('age', 50)
 ```
 
 ### in
@@ -498,7 +507,7 @@ new Wapper().gte('age', 50)
 
 ```typescript
 // 查询`age`在`18、19、20`之中的数据
-new Wapper().in('age', [18, 19, 20])
+new Wrapper().in('age', [18, 19, 20])
 ```
 
 ### notIn
@@ -507,7 +516,7 @@ new Wapper().in('age', [18, 19, 20])
 
 ```typescript
 // 查询`age`不在`18、19、20`之中的数据
-new Wapper().notIn('age', [18, 19, 20])
+new Wrapper().notIn('age', [18, 19, 20])
 ```
 
 ### between
@@ -516,7 +525,7 @@ new Wapper().notIn('age', [18, 19, 20])
 
 ```typescript
 // 查询 age 在 18-60之间的数据
-new Wapper().between('age', 18, 60)
+new Wrapper().between('age', 18, 60)
 
 ```
 
@@ -526,7 +535,7 @@ new Wapper().between('age', 18, 60)
 
 ```typescript
 // 查询 age 不在 18-60之间的数据
-new Wapper().notBetween('age', 18, 60)
+new Wrapper().notBetween('age', 18, 60)
 
 ```
 
@@ -536,7 +545,7 @@ new Wapper().notBetween('age', 18, 60)
 
 ```typescript
 // 匹配 `name` 的第一个字是`张`的数据
-new Wapper().like('name', '张%')
+new Wrapper().like('name', '张%')
 ```
 
 ### notLike
@@ -545,7 +554,7 @@ new Wapper().like('name', '张%')
 
 ```typescript
 // 匹配 `name` 的第一个字，不是`张`的数据
-new Wapper().notLike('name', '张%')
+new Wrapper().notLike('name', '张%')
 ```
 
 ### isNull
@@ -554,7 +563,7 @@ new Wapper().notLike('name', '张%')
 
 ```typescript
 // 查询 `title` 等于null的数据
-new Wapper().isNull('title')
+new Wrapper().isNull('title')
 ```
 
 ### isNotNull
@@ -563,7 +572,7 @@ new Wapper().isNull('title')
 
 ```typescript
 // 查询 `title` 不等于null的数据
-new Wapper().isNotNull('title')
+new Wrapper().isNotNull('title')
 ```
 
 ### orderByAsc
@@ -572,7 +581,7 @@ new Wapper().isNotNull('title')
 
 ```typescript
 // 将查询结果根据id升序排列
-new Wapper().orderByAsc('id')
+new Wrapper().orderByAsc('id')
 ```
 
 ### orderByDesc
@@ -581,7 +590,7 @@ new Wapper().orderByAsc('id')
 
 ```typescript
 // 将查询结果根据id降序排列
-new Wapper().orderByDesc('id')
+new Wrapper().orderByDesc('id')
 ```
 
 ### groupBy
@@ -590,7 +599,7 @@ new Wapper().orderByDesc('id')
 
 ```typescript
 // 依次根据id、name进行分组
-new Wapper().groupBy('id', 'name')
+new Wrapper().groupBy('id', 'name')
 ```
 
 生成的sql
@@ -605,7 +614,7 @@ SELECT * FROM user GROUP BY id, name
 
 ```typescript
 // 根据name分组，过滤分组条件是name不等于张三
-new Wapper().groupBy('name').having(`name != '张三'`)
+new Wrapper().groupBy('name').having(`name != '张三'`)
 ```
 
 生成的sql
@@ -619,8 +628,8 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 用于在查询条件中添加 OR 逻辑。通过调用 or 方法，可以改变后续查询条件的连接方式，从默认的 AND 连接变为 OR 连接
 
 ```typescript
-new Wapper().eq('name', '111')
-  .or(new Wapper().eq('name', '222').eq('age', 18))
+new Wrapper().eq('name', '111')
+  .or(new Wrapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
@@ -634,9 +643,9 @@ name = '111' or ( name = '222' and age=18 )
 用于在查询条件中添加 AND 逻辑。通过调用 and 方法，可以创建 AND 嵌套条件，即在一个 AND 逻辑块中包含多个查询条件
 
 ```typescript
-new Wapper()
+new Wrapper()
   .eq('name', '111')
-  .and(new Wapper().notEq('name', '222'))
+  .and(new Wrapper().notEq('name', '222'))
 ```
 
 生成SQL为
@@ -653,11 +662,11 @@ name = '111' and ( name != '222' )
 
 ```typescript
 //指定字段
-new Wapper().select('id,name,age')
+new Wrapper().select('id,name,age')
 //使用函数
-new Wapper().select('count(*),sum(age)')
+new Wrapper().select('count(*),sum(age)')
 //字段别名
-new Wapper().select('age as nianling')
+new Wrapper().select('age as nianling')
 ```
 
 ## 其他功能
@@ -673,38 +682,38 @@ import { BaseMapper, MapperParam } from 'rdbplus'
 
 // 实现一个 getRow
 const getRow = (res: relationalStore.ResultSet) => {
-  const emp = new Employee()
-  emp.id = res.getLong(res.getColumnIndex('id'))
-  emp.name = res.getString(res.getColumnIndex('name'))
-  return emp
+   const emp = new Employee()
+   emp.id = res.getLong(res.getColumnIndex('id'))
+   emp.name = res.getString(res.getColumnIndex('name'))
+   return emp
 }
 
 export class EmpMapper extends BaseMapper<Employee> {
-  // 构造函数，仅接收参数，将参数传给super
-  private constructor(config: relationalStore.StoreConfig) {
-    super({ tableName: 't_emp', primaryKey: 'id' }, getRow, config)
-  }
+   // 构造函数，仅接收参数，将参数传给super
+   private constructor(config: relationalStore.StoreConfig) {
+      super({ tableName: 't_emp', primaryKey: 'id' }, getRow, config)
+   }
 
-  // 手动 new出EmpMapper
-  // 数据库1
-  static getDemo1DB(): EmpMapper {
-    return new EmpMapper(
-      {
-        name: 'Demo1DB.db',
-        securityLevel: relationalStore.SecurityLevel.S1
-      }
-    )
-  }
+   // 手动 new出EmpMapper
+   // 数据库1
+   static getDemo1DB(): EmpMapper {
+      return new EmpMapper(
+         {
+            name: 'Demo1DB.db',
+            securityLevel: relationalStore.SecurityLevel.S1
+         }
+      )
+   }
 
-  // 数据库2
-  static getDemo2DB(): EmpMapper {
-    return new EmpMapper(
-      {
-        name: 'Demo2DB.db',
-        securityLevel: relationalStore.SecurityLevel.S1
-      }
-    )
-  }
+   // 数据库2
+   static getDemo2DB(): EmpMapper {
+      return new EmpMapper(
+         {
+            name: 'Demo2DB.db',
+            securityLevel: relationalStore.SecurityLevel.S1
+         }
+      )
+   }
 }
 ```
 
