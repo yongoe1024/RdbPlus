@@ -5,7 +5,10 @@
 这是一个sqlite的增强工具，无需编写sql代码，通过继承BaseMapper类，一行搞定增删改查，为简化开发、提高效率而生。（类似Mybatis-plus）
 
 ## 版本说明
-2.0.0
+### 2.0.1
+1. 优化生成的sql
+
+### 2.0.0
 1. 修改命名 wapper->wrapper
 2. 使用API 5.0.3(15)
 
@@ -51,11 +54,11 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 ```typescript
 export class Employee {
-  id: number
-  name: string
+   id: number
+   name: string
 
-  constructor() {
-  }
+   constructor() {
+   }
 }
 ```
 
@@ -75,21 +78,21 @@ import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
 
 const getRow = (res: relationalStore.ResultSet) => {
-  const emp = new Employee()
-  emp.id = res.getLong(res.getColumnIndex('id'))
-  emp.name = res.getString(res.getColumnIndex('name'))
-  return emp
+   const emp = new Employee()
+   emp.id = res.getLong(res.getColumnIndex('id'))
+   emp.name = res.getString(res.getColumnIndex('name'))
+   return emp
 }
 
 export class EmpMapper extends BaseMapper<Employee> {
-  constructor() {
-    super(
-      { tableName: 't_emp', primaryKey: 'id' },
-      getRow,
-      // 可选参数
-      { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
-    )
-  }
+   constructor() {
+      super(
+         { tableName: 't_emp', primaryKey: 'id' },
+         getRow,
+         // 可选参数
+         { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
+      )
+   }
 }
 ```
 
@@ -130,23 +133,23 @@ struct Index {
 
 ```javascript
 export class EmpMapper extends BaseMapper<Employee> {
-    /**
+   /**
     ...其余省略
     ...
-     */
-   
-   
-    async createTable() {
-        const db = await this.getConnection()
-        await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
-        await db.execDML(
-            `create table if not exists "t_emp" (
+    */
+
+
+   async createTable() {
+      const db = await this.getConnection()
+      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
+      await db.execDML(
+         `create table if not exists "t_emp" (
              id integer primary key autoincrement,
              name varchar(20)
         )`)
-        await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
-        await db.close()
-    }
+      await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
+      await db.close()
+   }
 }
 ```
 
@@ -443,8 +446,8 @@ this.empMapper.delete(new Wrapper().eq('name', '111'))
 ```typescript
 // 更新`name`等于`张三`的数据，将`name`值更改为`李四`
 new Wrapper()
-  .set('name', '李四')
-  .eq('name', '张三')
+   .set('name', '李四')
+   .eq('name', '张三')
 ```
 
 ### eq
@@ -629,7 +632,7 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 
 ```typescript
 new Wrapper().eq('name', '111')
-  .or(new Wrapper().eq('name', '222').eq('age', 18))
+   .or(new Wrapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
@@ -644,8 +647,8 @@ name = '111' or ( name = '222' and age=18 )
 
 ```typescript
 new Wrapper()
-  .eq('name', '111')
-  .and(new Wrapper().notEq('name', '222'))
+   .eq('name', '111')
+   .and(new Wrapper().notEq('name', '222'))
 ```
 
 生成SQL为
