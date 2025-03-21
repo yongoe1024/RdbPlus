@@ -30,7 +30,7 @@ export class SQLUtils<T> {
 
 
   getById(id: any) {
-    let sql = `select * from ${this.tableName} where ${this.primaryKey};`
+    let sql = `select * from ${this.tableName} where ${this.primaryKey} = ?;`
     return {
       sql: sql,
       values: [id]

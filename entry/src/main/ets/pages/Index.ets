@@ -47,6 +47,11 @@ struct Index {
         showDialog(JSON.stringify(res))
       })
 
+      Button('getById').onClick(async () => {
+        const res = await this.mapper.getById(1)
+        showDialog(JSON.stringify(res))
+      })
+
       Button('等于').onClick(async () => {
         const res = await this.mapper.getList(new Wrapper().eq('name', '111'))
         showDialog(JSON.stringify(res, null, 2))
