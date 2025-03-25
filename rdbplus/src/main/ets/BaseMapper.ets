@@ -225,6 +225,28 @@ export class BaseMapper<T> {
   }
 
   /**
+   * 添加一行数据，使用原生SQL
+   * @param obj 实体类
+   * @returns 返回RowId
+   */
+  async insertNative(obj: T, db?: Connection): Promise<number> {
+    let isClose: boolean = true
+    if (db == undefined) {
+      db = await this.getConnection()
+    } else {
+      isClose = false
+    }
+    const mapperData = this.sqlUtils.insertNative(obj)
+    const rowId = await db.insertNative(
+      mapperData.tableName, mapperData.valuesBucket as relationalStore.ValuesBucket
+    )
+    if (isClose) {
+      await db.close()
+    }
+    return rowId
+  }
+
+  /**
    * 更新，手动set更新字段
    * @param wrapper 更新条件
    * @returns 无返回值
