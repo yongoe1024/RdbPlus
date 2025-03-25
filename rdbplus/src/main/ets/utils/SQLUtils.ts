@@ -56,6 +56,41 @@ export class SQLUtils<T> {
     } as MapperData
   }
 
+  insertNative(obj: T) {
+    /**
+     * // 以下三种方式可用  要将obj转换为以下三种方式之一
+     {
+     'NAME': value6,
+     'AGE': value7,
+     'SALARY': value8,
+     'CODES': value9,
+     'IDENTITY': value10,
+     };
+     {
+     NAME: value6,
+     AGE: value7,
+     SALARY: value8,
+     CODES: value9,
+     IDENTITY: value10,
+     };
+     {
+     "NAME": value6,
+     "AGE": value7,
+     "SALARY": value8,
+     "CODES": value9,
+     "IDENTITY": value10,
+     };
+     */
+    let valuesBucket = {}
+    Object.entries(obj).forEach(([k, v]) => {
+      valuesBucket[k] = v
+    })
+    return {
+      tableName: this.tableName,
+      valuesBucket: valuesBucket
+    } as NativeSqlData
+  }
+
   updateById(obj: T) {
     let idValue: any
     let fields: string[] = []
@@ -112,3 +147,7 @@ export interface MapperData {
   values: any[]
 }
 
+export interface NativeSqlData {
+  tableName: string
+  valuesBucket: any
+}

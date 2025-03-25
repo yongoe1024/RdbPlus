@@ -46,6 +46,21 @@ export class Connection {
     }
   }
 
+  /**
+   * 执行：调用原生的insert方法
+   * @param tableName 表名
+   * @param data 数据
+   * @returns 插入的行id 失败返回-1
+   */
+  async insertNative(tableName: string, data: relationalStore.ValuesBucket): Promise<number> {
+    try {
+      console.info('insert:', tableName, JSON.stringify(data))
+      return await this.store!.insert(tableName, data)
+    } catch (e) {
+      console.error('insert错误', e.message, e.code, JSON.stringify(e))
+      throw new Error('insert错误')
+    }
+  }
 
   beginTransaction() {
     console.info('transaction begin ', this.id)
