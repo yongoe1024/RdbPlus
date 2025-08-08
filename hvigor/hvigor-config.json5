@@ -1,5 +1,5 @@
 {
-  "modelVersion": "5.0.0",
+  "modelVersion": "5.1.0",
   "dependencies": {
   },
   "execution": {
@@ -8,6 +8,7 @@
     // "incremental": true,                     /* Enable incremental compilation. Value: [ true | false ]. Default: true */
     // "parallel": true,                        /* Enable parallel compilation. Value: [ true | false ]. Default: true */
     // "typeCheck": false,                      /* Enable typeCheck. Value: [ true | false ]. Default: false */
+    // "optimizationStrategy": "memory"         /* Define the optimization strategy. Value: [ "memory" | "performance" ]. Default: "memory" */
   },
   "logging": {
     // "level": "info"                          /* Define the log level. Value: [ "debug" | "info" | "warn" | "error" ]. Default: "info" */

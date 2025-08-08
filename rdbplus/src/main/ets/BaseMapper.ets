@@ -1,29 +1,56 @@
-import { relationalStore, ValueType } from "@kit.ArkData";
-import { SQLUtils } from "./utils/SQLUtils";
-import { Connection } from "./utils/Connection";
-import { Wrapper } from "./Wrapper";
-import { Page } from "./Page";
-import { AnyObject } from "./AnyObject";
+import { relationalStore } from "@kit.ArkData";
+import { Connection } from "./core/Connection";
+import { Wrapper } from "./core/Wrapper";
+import { Page } from "./model/Page";
+import { BuildParams } from "./model/BuildParams";
+import { getColumnMeta, getEntityMeta } from "./core/DecoratorUtils";
+import { SqlUtils } from "./core/SqlUtils";
+import { MyWrapper } from "./core/MyWrapper";
 
 export class BaseMapper<T> {
   private config: relationalStore.StoreConfig
-  private sqlUtils: SQLUtils<T>
+  private sqlUtils: SqlUtils<T>
   private getRow: (res: relationalStore.ResultSet) => T
 
-  constructor(param: MapperParam, getRow: (res: relationalStore.ResultSet) => T, config: relationalStore.StoreConfig = {
-    name: 'demo.db',
-    securityLevel: relationalStore.SecurityLevel.S1  //安全级别
-  }) {
-    this.sqlUtils = new SQLUtils(param.tableName, param.primaryKey)
-    this.getRow = getRow
-    this.config = config
+  public static build<T>(param: BuildParams<T>): BaseMapper<T> {
+    let tableName = getEntityMeta(param.class)
+    let columnsMeta = getColumnMeta(param.class)
+    let config: relationalStore.StoreConfig = {
+      name: param.dbName,
+      securityLevel: param.securityLevel
+    }
+    // 校验参数
+    if (tableName && columnsMeta.length > 0 && param.dbName) {
+    } else {
+      throw new Error('表参数错误')
+    }
+    //-------
+    let getRow: (res: relationalStore.ResultSet) => T = (res: relationalStore.ResultSet) => {
+      // let obj = new param.class()
+      let result: ESObject = {}
+      let columnNames = res.columnNames
+      for (let i = 0; i < columnNames.length; i++) {
+        let e = columnNames[i]
+        result[e] = res.getValue(res.getColumnIndex(e))
+      }
+      return result as T
+    }
+    let sqlUtil = new SqlUtils<T>(tableName, columnsMeta)
+    return new BaseMapper(config, sqlUtil, getRow)
+  }
+
+  private constructor(config: relationalStore.StoreConfig, sqlUtils: SqlUtils<T>,
+    getRow: (res: relationalStore.ResultSet) => T) {
+    this.config = config;
+    this.sqlUtils = sqlUtils;
+    this.getRow = getRow;
   }
 
   /**
    * 获取新连接
    */
   async getConnection() {
-    return await Connection.init(this.config)
+    return await Connection.create(this.config)
   }
 
   /**
@@ -32,23 +59,29 @@ export class BaseMapper<T> {
    * @returns 行数
    */
   async count(wrapper: Wrapper, db?: Connection): Promise<number> {
-    let isClose: boolean = true
-    if (db == undefined) {
-      db = await this.getConnection()
-    } else {
-      isClose = false
+    try {
+      let isClose: boolean = true
+      if (db == undefined) {
+        db = await this.getConnection()
+      } else {
+        isClose = false
+      }
+      let myWrapper = MyWrapper.build(wrapper)
+      const sql = this.sqlUtils.count(myWrapper.getWhere(),
+        myWrapper.getGroup(),
+        myWrapper.getOrder())
+      const res: relationalStore.ResultSet = await db.execDQL(sql, myWrapper.getValue())
+      res.goToFirstRow()
+      const count: number = res.getLong(0)
+      res.close()
+      if (isClose) {
+        await db.close()
+      }
+      return count
+    } catch (e) {
+      console.log(e)
+      return e
     }
-    const sql = this.sqlUtils.count(wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder())
-    const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wrapper.getWhereValue()
-    )
-    res.goToFirstRow()
-    const count: number = res.getLong(0)
-    res.close()
-    if (isClose) {
-      await db.close()
-    }
-    return count
   }
 
   /**
@@ -56,21 +89,25 @@ export class BaseMapper<T> {
    * @param wrapper 查询条件
    * @returns 对象数组
    */
-  async getObject(wrapper: Wrapper, db?: Connection): Promise<AnyObject[]> {
+  async getObject(wrapper: Wrapper, db?: Connection): Promise<ESObject[]> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.list(wrapper.getSelect(), wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder())
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.list(myWrapper.getSelect(),
+      myWrapper.getWhere(),
+      myWrapper.getGroup(),
+      myWrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wrapper.getWhereValue()
+      sql, myWrapper.getValue()
     )
     const columnNames: Array<string> = res.columnNames
-    const list: AnyObject[] = []
+    const list: ESObject[] = []
     while (res.goToNextRow()) {
-      let obj: AnyObject = {}
+      let obj: ESObject = {}
       columnNames.forEach((name) => {
         obj[name] = res.getValue(res.getColumnIndex(name))
       })
@@ -89,20 +126,18 @@ export class BaseMapper<T> {
    * @param params 占位符参数
    * @returns 对象数组
    */
-  async getObjectBySql(sql: string, params: relationalStore.ValueType[], db?: Connection): Promise<AnyObject[]> {
+  async getObjectBySql(sql: string, params: relationalStore.ValueType[], db?: Connection): Promise<ESObject[]> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const res: relationalStore.ResultSet = await db.execDQL(
-      sql, params
-    )
+    const res: relationalStore.ResultSet = await db.execDQL(sql, params)
     const columnNames: Array<string> = res.columnNames
-    const list: AnyObject[] = []
+    const list: ESObject[] = []
     while (res.goToNextRow()) {
-      let obj: AnyObject = {}
+      let obj: ESObject = {}
       columnNames.forEach((name) => {
         obj[name] = res.getValue(res.getColumnIndex(name))
       })
@@ -127,9 +162,13 @@ export class BaseMapper<T> {
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.list(wrapper.getSelect(), wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder())
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.list(myWrapper.getSelect(),
+      myWrapper.getWhere(),
+      myWrapper.getGroup(),
+      myWrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wrapper.getWhereValue()
+      sql, myWrapper.getValue()
     )
     const list: T[] = []
     while (res.goToNextRow()) {
@@ -141,6 +180,37 @@ export class BaseMapper<T> {
       await db.close()
     }
     return list
+  }
+
+  /**
+   * 查询第一个数据
+   * @param wrapper 查询条件
+   * @returns 实体类的数组
+   */
+  async getOne(wrapper: Wrapper, db?: Connection): Promise<T | undefined> {
+    let isClose: boolean = true
+    if (db == undefined) {
+      db = await this.getConnection()
+    } else {
+      isClose = false
+    }
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.getOne(myWrapper.getSelect(),
+      myWrapper.getWhere(),
+      myWrapper.getGroup(),
+      myWrapper.getOrder())
+    const res: relationalStore.ResultSet = await db.execDQL(
+      sql, myWrapper.getValue()
+    )
+    let one: T | undefined = undefined
+    if (res.goToNextRow()) {
+      one = this.getRow(res)
+    }
+    res.close()
+    if (isClose) {
+      await db.close()
+    }
+    return one
   }
 
   /**
@@ -158,11 +228,13 @@ export class BaseMapper<T> {
       isClose = false
     }
     const count: number = await this.count(wrapper, db)
-    const sql =
-      this.sqlUtils.page(wrapper.getSelect(), wrapper.getWhere(), wrapper.getGroup(), wrapper.getOrder(), current, size)
-    const res: relationalStore.ResultSet = await db.execDQL(
-      sql, wrapper.getWhereValue()
-    )
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.page(myWrapper.getSelect(),
+      myWrapper.getWhere(),
+      myWrapper.getGroup(),
+      myWrapper.getOrder(),
+      current, size)
+    const res: relationalStore.ResultSet = await db.execDQL(sql, myWrapper.getValue())
     const list: T[] = []
     while (res.goToNextRow()) {
       list.push(this.getRow(res))
@@ -180,17 +252,15 @@ export class BaseMapper<T> {
    * @param id 主键
    * @returns 返回实体类
    */
-  async getById(id: ValueType, db?: Connection): Promise<T | undefined> {
+  async getById(id: relationalStore.ValueType, db?: Connection): Promise<T | undefined> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const mapperData = this.sqlUtils.getById(id)
-    const res: relationalStore.ResultSet = await db.execDQL(
-      mapperData.sql, mapperData.values
-    )
+    const sqlData = this.sqlUtils.getById(id)
+    const res: relationalStore.ResultSet = await db.execDQL(sqlData.sql, sqlData.values)
     let entity: T | undefined = undefined
     if (res.goToFirstRow()) {
       entity = this.getRow(res)
@@ -215,10 +285,27 @@ export class BaseMapper<T> {
     } else {
       isClose = false
     }
-    const mapperData = this.sqlUtils.insert(obj)
-    await db.execDML(
-      mapperData.sql, mapperData.values
-    )
+    const sqlData = this.sqlUtils.insert(obj)
+    await db.execDML(sqlData.sql, sqlData.values)
+    if (isClose) {
+      await db.close()
+    }
+  }
+
+  /**
+   * 添加一组数据
+   * @param obj 实体类
+   * @returns 无返回值
+   */
+  async insertBatch(list: T[], db?: Connection): Promise<void> {
+    let isClose: boolean = true
+    if (db == undefined) {
+      db = await this.getConnection()
+    } else {
+      isClose = false
+    }
+    const sqlData = this.sqlUtils.insertBatch(list)
+    await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
@@ -236,10 +323,9 @@ export class BaseMapper<T> {
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.update(wrapper.getUpdate(), wrapper.getWhere())
-    await db.execDML(
-      sql, [...wrapper.getUpdateValue(), ...wrapper.getWhereValue()]
-    )
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.update(myWrapper.getUpdate(), myWrapper.getWhere())
+    await db.execDML(sql, [...myWrapper.getUpdateValue(), ...myWrapper.getValue()])
     if (isClose) {
       await db.close()
     }
@@ -257,10 +343,8 @@ export class BaseMapper<T> {
     } else {
       isClose = false
     }
-    const mapperData = this.sqlUtils.updateById(obj)
-    await db.execDML(
-      mapperData.sql, mapperData.values
-    )
+    const sqlData = this.sqlUtils.updateById(obj)
+    await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
@@ -278,10 +362,9 @@ export class BaseMapper<T> {
     } else {
       isClose = false
     }
-    const sql = this.sqlUtils.delete(wrapper.getWhere())
-    await db.execDML(
-      sql, wrapper.getWhereValue()
-    )
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.delete(myWrapper.getWhere())
+    await db.execDML(sql, myWrapper.getValue())
     if (isClose) {
       await db.close()
     }
@@ -292,25 +375,18 @@ export class BaseMapper<T> {
    * @param id 主键
    * @returns 无返回值
    */
-  async deleteById(id: ValueType, db?: Connection): Promise<void> {
+  async deleteById(id: relationalStore.ValueType, db?: Connection): Promise<void> {
     let isClose: boolean = true
     if (db == undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
     }
-    const mapperData = this.sqlUtils.deleteById(id)
-    await db.execDML(
-      mapperData.sql, mapperData.values
-    )
+    const sqlData = this.sqlUtils.deleteById(id)
+    await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
   }
-}
-
-export interface MapperParam {
-  tableName: string
-  primaryKey: string
 }
 

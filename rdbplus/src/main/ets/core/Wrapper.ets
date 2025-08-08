@@ -1,17 +1,21 @@
-type ValueType = null | number | string | boolean | Uint8Array | Float32Array | bigint;
+import { relationalStore } from "@kit.ArkData"
 
 /**
  * 构造查询参数
  */
 export class Wrapper {
-  private selectSql: string | undefined = undefined
-  private groupSql: string | undefined = undefined
-  private havingSql: string | undefined = undefined
-  private orderList: string[] = []
-  private whereList: string[] = []
-  private valueList: ValueType[] = []
-  private updateList: string[] = []
-  private updateValueList: ValueType[] = []
+  protected selectSql: string = '*'
+  protected groupSql: string = ''
+  protected havingSql: string = ''
+  protected orderList: string[] = []
+  protected whereList: string[] = []
+  protected valueList: relationalStore.ValueType[] = []
+  protected updateList: string[] = []
+  protected updateValueList: relationalStore.ValueType[] = []
+
+  constructor() {
+  }
+
 
   /**
    * update set 修改某字段
@@ -19,7 +23,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  set(field: string, value: ValueType) {
+  set(field: string, value: relationalStore.ValueType) {
     this.updateList.push(`${field} = ?`)
     this.updateValueList.push(value)
     return this
@@ -31,7 +35,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  eq(field: string, value: ValueType): Wrapper {
+  eq(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} = ?`)
     this.valueList.push(value)
     return this
@@ -43,7 +47,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  notEq(field: string, value: ValueType): Wrapper {
+  notEq(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} != ?`)
     this.valueList.push(value)
     return this
@@ -55,10 +59,10 @@ export class Wrapper {
    * @param value 值的数组
    * @returns Wrapper
    */
-  in(field: string, value: ValueType[]): Wrapper {
+  in(field: string, value: relationalStore.ValueType[]): Wrapper {
     const str = new Array(value.length).fill('?').join(',')
     this.whereList.push(`and ${field} in (${str})`)
-    Array.prototype.push.apply(this.valueList, value);
+    this.valueList.push(...value)
     return this
   }
 
@@ -68,10 +72,10 @@ export class Wrapper {
    * @param value 值的数组
    * @returns Wrapper
    */
-  notIn(field: string, value: ValueType[]): Wrapper {
+  notIn(field: string, value: relationalStore.ValueType[]): Wrapper {
     const str = new Array(value.length).fill('?').join(',')
     this.whereList.push(`and ${field} not in (${str})`)
-    Array.prototype.push.apply(this.valueList, value);
+    this.valueList.push(...value)
     return this
   }
 
@@ -81,7 +85,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  lt(field: string, value: ValueType): Wrapper {
+  lt(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} < ?`)
     this.valueList.push(value)
     return this
@@ -93,7 +97,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  lte(field: string, value: ValueType): Wrapper {
+  lte(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} <= ?`)
     this.valueList.push(value)
     return this
@@ -105,7 +109,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  gt(field: string, value: ValueType): Wrapper {
+  gt(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} > ?`)
     this.valueList.push(value)
     return this
@@ -117,7 +121,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  gte(field: string, value: ValueType): Wrapper {
+  gte(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} >= ?`)
     this.valueList.push(value)
     return this
@@ -130,7 +134,7 @@ export class Wrapper {
    * @param end 结束值
    * @returns Wrapper
    */
-  between(field: string, start: ValueType, end: ValueType): Wrapper {
+  between(field: string, start: relationalStore.ValueType, end: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} between ? and ?`)
     this.valueList.push(start)
     this.valueList.push(end)
@@ -144,7 +148,7 @@ export class Wrapper {
    * @param end 结束值
    * @returns Wrapper
    */
-  notBetween(field: string, start: ValueType, end: ValueType): Wrapper {
+  notBetween(field: string, start: relationalStore.ValueType, end: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} not between ? and ?`)
     this.valueList.push(start)
     this.valueList.push(end)
@@ -157,7 +161,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  like(field: string, value: ValueType): Wrapper {
+  like(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} like ?`)
     this.valueList.push(value)
     return this
@@ -169,7 +173,7 @@ export class Wrapper {
    * @param value 值
    * @returns Wrapper
    */
-  notLike(field: string, value: ValueType): Wrapper {
+  notLike(field: string, value: relationalStore.ValueType): Wrapper {
     this.whereList.push(`and ${field} not like ?`)
     this.valueList.push(value)
     return this
@@ -216,7 +220,7 @@ export class Wrapper {
   }
 
   /**
-   * 分组查询
+   * 分组查询，一般用object接收，实体类接收会导致没组只接收第一个
    * @param fields 可以传多个字段
    * @returns Wrapper
    */
@@ -243,9 +247,9 @@ export class Wrapper {
    */
   or(wrapper: Wrapper): Wrapper {
     this.whereList.push('or (1=1 ')
-    Array.prototype.push.apply(this.whereList, wrapper.whereList);
+    this.whereList.push(...wrapper.whereList)
     this.whereList.push(')')
-    Array.prototype.push.apply(this.valueList, wrapper.valueList);
+    this.valueList.push(...wrapper.valueList)
     return this
   }
 
@@ -256,9 +260,9 @@ export class Wrapper {
    */
   and(wrapper: Wrapper): Wrapper {
     this.whereList.push('and (1=1 ')
-    Array.prototype.push.apply(this.whereList, wrapper.whereList);
+    this.whereList.push(...wrapper.whereList)
     this.whereList.push(')')
-    Array.prototype.push.apply(this.valueList, wrapper.valueList);
+    this.valueList.push(...wrapper.valueList)
     return this
   }
 
@@ -267,70 +271,18 @@ export class Wrapper {
    * @param sql sql语句
    * @returns Wrapper
    */
-  select(sql: string): Wrapper {
-    this.selectSql = sql
+  select(...field: string[]): Wrapper {
+    this.selectSql = field.join(',')
     return this
   }
 
   /**
-   * 不对外使用
+   * 仅查询指定SQL
+   * @param sql sql语句
+   * @returns Wrapper
    */
-  getSelect(): string | undefined {
-    return this.selectSql
-  }
-
-  /**
-   * 不对外使用
-   */
-  getWhere(): string {
-    let sql = '1=1 ' + this.whereList.join(" ")
-    return sql
-  }
-
-  /**
-   * 不对外使用
-   */
-  getWhereValue(): ValueType[] {
-    return this.valueList
-  }
-
-  /**
-   * 不对外使用
-   */
-  getOrder(): string | undefined {
-    if (this.orderList.length == 0) {
-      return undefined
-    } else {
-      return 'order by ' + this.orderList.join(',')
-    }
-  }
-
-  /**
-   * 不对外使用
-   */
-  getGroup(): string | undefined {
-    if (this.groupSql == undefined) {
-      return undefined
-    } else {
-      let sql = this.groupSql
-      if (this.havingSql != undefined) {
-        sql += ` ${this.havingSql}`
-      }
-      return sql
-    }
-  }
-
-  /**
-   * 不对外使用
-   */
-  getUpdate() {
-    return this.updateList.join(",")
-  }
-
-  /**
-   * 不对外使用
-   */
-  getUpdateValue() {
-    return this.updateValueList
+  selectSQL(sql: string): Wrapper {
+    this.selectSql = sql
+    return this
   }
 }

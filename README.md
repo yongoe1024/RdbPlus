@@ -1,16 +1,53 @@
 # rdb-plus 使用文档
+- [简介](#简介)
+- [版本说明](#版本说明)
+- [下载安装](#下载安装)
+- [使用案例](#使用案例)
+- [功能介绍](#功能介绍)
+- [引入教程](#引入教程)
+  - [初始化](#初始化)
+  - [第一步：创建实体类](#第一步创建实体类)
+  - [第二步：创建Mapper类](#第二步创建mapper类)
+  - [第三步：页面中调用](#第三步页面中调用)
+  - [建表、连接查询等复杂SQl，采用手写SQL方法](#建表连接查询等复杂sql采用手写sql方法)
+- [API介绍](#api介绍)
+  - [count](#count)
+  - [getObject](#getobject)
+  - [getObjectBySql](#getobjectbysql)
+  - [getList](#getlist)
+  - [getOne](#getone)
+  - [getPage](#getpage)
+  - [getById](#getbyid)
+  - [insert](#insert)
+  - [insertBatch](#insertbatch)
+  - [updateById](#updatebyid)
+  - [update](#update)
+  - [deleteById](#deletebyid)
+  - [delete](#delete)
+  - [getConnection](#getconnection)
+- [条件构造器介绍](#条件构造器介绍)
+- [其他功能](#其他功能)
+  - [多数据源](#多数据源)
+  - [事务](#事务)
+- [贡献代码](#贡献代码)
+- [开源协议](#开源协议)
+
 
 ## 简介
 
-这是一个sqlite的增强工具，无需编写sql代码，通过继承BaseMapper类，一行搞定增删改查，为简化开发、提高效率而生。（类似Mybatis-plus）
+SQLite的ORM框架，无需编写sql代码，通过装饰器解析表结构，一行搞定增删改查
+
+已在`哈啰出行`、`一汽奥迪`等APP中使用
+
+QQ交流群：1056151960
 
 ## 版本说明
-### 2.0.1
-1. 优化生成的sql
 
-### 2.0.0
-1. 修改命名 wapper->wrapper
-2. 使用API 5.0.3(15)
+3.0.0 使用API `5.1.0(18)` 编译
+
+经过测试，在低版本系统也可运行
+
+[工程版本升级教程](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-integrated-project-migration)
 
 ## 下载安装
 
@@ -24,6 +61,7 @@ https://gitee.com/yongoe/RdbPlus/tree/main/entry/src/main/ets
 
 https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
+
 ## 功能介绍
 
 | 函数名            | 介绍                    |
@@ -31,91 +69,134 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 | count          | 查询符合条件的记录总数           |
 | getList        | 查询符合条件的记录             |
 | getPage        | 分页查询符合条件的记录           |
+| getOne         | 查询第一个符合条件的记录          |
 | getObject      | 查询符合条件的记录，返回对象数组      |
 | getObjectBySql | 输入SQL查询符合条件的记录，返回对象数组 |
-| getById        | 根据 ID 查询              |
+| getById        | 根据主键查询                |
 | insert         | 插入一条记录                |
-| updateById     | 根据 ID 更新数据            |
+| insertBatch    | 插入多条记录                |
+| updateById     | 根据主键更新数据              |
 | update         | 更新符合条件的记录             |
-| deleteById     | 根据 ID 删除              |
+| deleteById     | 根据主键删除                |
 | delete         | 删除符合条件的记录             |
 
 ## 引入教程
 
 1. 首先引入ohpm依赖：`ohpm i rdbplus`
-2. 创建一个数据库表对应的实体类，推荐ts格式，比如`Employee.ts`
-3. 创建一个mapper类，比如 `EmpMapper.ets`
-4. 直接在页面中`new出EmpMapper`，就可以调用增删改查的方法，无需编写SQL代码
+2. 在`EntryAbility` 的 `onWindowStageCreate` 中调用 `Connection.init()` 进行初始化
+3. 创建一个数据库表对应的ets类，并用装饰器`@Table`、`@TableField`标注
+4. 创建一个class，用来做单例模式
+5. 直接在页面中获取实例，就可以调用增删改查的方法，无需编写SQL代码
+
+### 初始化
+
+在`EntryAbility` 的 `onWindowStageCreate` 中调用 `Connection.init()` 进行初始化
+
+传入两个参数：Context、日志DbLogger（可空）
+
+rdbplus提供了`DbLogger`，可以自行继承`Logger`接口构造日志对象
+
+```typescript
+export default class EntryAbility extends UIAbility {
+  onWindowStageCreate(windowStage: window.WindowStage): void {
+
+    windowStage.loadContent('pages/Index', (err) => {
+      windowStage.getMainWindow().then(res => {
+        Connection.init(res.getUIContext().getHostContext(), new DbLogger())
+      })
+    });
+  }
+}
+```
 
 ### 第一步：创建实体类
 
-推荐在`src/main/ets/entity`路径中，创建ts文件`Employee.ts`(可以不写默认值)  
-！！！字段名要与数据库字段一一对应，完全一致！！！
+1. 创建`Employee.ets`，字段名要与数据库字段一一对应
+2. 数据库没有的字段，不需要标注`@TableField`，
+3. 当数据库表中有字段，而class没有，不影响结果，数据库返回的结果，都可以正常从返回结果中取出来
+4. 数据表字段类型与class字段类型不一致，不影响结果，ets的类型仅在编译期限制（建议类型保持一致）
 
 ```typescript
-export class Employee {
-   id: number
-   name: string
+import { Table, TableField, FieldType } from "rdbplus"
 
-   constructor() {
-   }
+@Table({ tableName: 't_emp' })
+export class Employee {
+  /**
+   * id
+   */
+  @TableField({ name: 'id', type: FieldType.NUMBER, isPrimaryKey: true })
+  id?: number
+  /**
+   * 名字
+   */
+  @TableField({ name: 'name', type: FieldType.TEXT, })
+  name?: string
+  /**
+   * 年龄
+   */
+  @TableField({ name: 'age', type: FieldType.NUMBER, })
+  age?: number
 }
 ```
 
 ### 第二步：创建Mapper类
 
-推荐在`src/main/ets/mapper`路径中，创建ets文件`EmpMapper.ets`
-
-1. 首先创建`EmpMapper类`，然后继承`BaseMapper`，传入泛型`Employee`
-2. 创建构造函数，调用super方法。  
-   第一个参数是`一个对象`，包含`表名`、`主键字段名`两项内容  
-   第二个参数是`回调函数`:`(res: relationalStore.ResultSet)=> T`，返回一个泛型对象，本意是为了从ResultSet中得到一行数据  
-   第三个参数是`可选值`，传入`relationalStore.StoreConfig`，比如数据库名、安全级别等。默认库名`demo.db`
+1. 创建static变量 `private static mapper: BaseMapper<Employee>`
+2. 使用 `BaseMapper.build()` 创建实例，三个参数分别为`Employee实体类`，`数据库名`，`安全级别`
 
 ```typescript
-import { Employee } from '../entity/Employee'
 import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
+import { Employee } from './Employee'
 
-const getRow = (res: relationalStore.ResultSet) => {
-   const emp = new Employee()
-   emp.id = res.getLong(res.getColumnIndex('id'))
-   emp.name = res.getString(res.getColumnIndex('name'))
-   return emp
-}
+export class EmpMapper {
+  private static mapper: BaseMapper<Employee>
 
-export class EmpMapper extends BaseMapper<Employee> {
-   constructor() {
-      super(
-         { tableName: 't_emp', primaryKey: 'id' },
-         getRow,
-         // 可选参数
-         { name: 'demo.db', securityLevel: relationalStore.SecurityLevel.S1 }
-      )
-   }
+  // 单例模式
+  static getInstance() {
+    if (!EmpMapper.mapper) {
+      EmpMapper.mapper = BaseMapper.build<Employee>({
+        class: Employee,
+        dbName: '表名',
+        securityLevel: relationalStore.SecurityLevel.S1
+      })
+    }
+    return EmpMapper.mapper
+  }
+
+  /**
+   * 可以从实例中获取Connection，直接操作SQL语句
+   */
+  static async createTable() {
+    const db = await EmpMapper.getInstance().getConnection()
+    await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`, [])
+    await db.execDML(
+      `create table if not exists "t_emp" (
+          id integer primary key autoincrement,
+          name varchar(20),
+          age integer
+      )`, [])
+    await db.close()
+  }
 }
 ```
 
 ### 第三步：页面中调用
 
 ```
-import { EmpMapper } from '../mapper/EmpMapper'
-
 @Entry
 @Component
 struct Index {
-  empMapper = new EmpMapper()
+  mapper = EmpMapper.getInstance()
 
-  build()
-  {
-    Button('查询全部数据').onClick(() => {
-       // 查询全部
-       let list:1 Employee[]  = await this.empMapper.getList(new Wrapper())
-       // 条件查询
-       let list2: Employee[]  = await this.empMapper.getList(new Wrapper().eq('name', '李四'))
-       // 统计总数
-       const num:number = await this.empMapper.count(new Wrapper())
-    })
+  build() {
+     Button('初始化').onClick(() => {
+        EmpMapper.createTable()
+      })
+      
+    Button('等于 name==123').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
+      })
   }
 }
 ```
@@ -127,43 +208,14 @@ struct Index {
    `execDML`是数据操纵函数，执行创建、添加、修改 语句  
    `execDQL`是数据查询函数，执行查询语句
 
-#### 示例
-
-在`EmpMapper.ets`中，添加一个函数`createTable`，用来创建表
-
-```javascript
-export class EmpMapper extends BaseMapper<Employee> {
-   /**
-    ...其余省略
-    ...
-    */
-
-
-   async createTable() {
-      const db = await this.getConnection()
-      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`)
-      await db.execDML(
-         `create table if not exists "t_emp" (
-             id integer primary key autoincrement,
-             name varchar(20)
-        )`)
-      await db.execDML(`INSERT INTO t_emp (id,name)  VALUES (null, ? );`, ['111'])
-      await db.close()
-   }
-}
-```
-
 ## API介绍
-
-以下代码示例的前提条件是：已经实现了一个mapper类，例如`EmpMapper`
 
 ### count
 
-查询符合条件的记录总数  
-返回值： 符合条件的记录总数。
+查询符合条件的记录总数
 
-| 入参             | 说明   |
-|----------------|------|
+| 入参               | 说明   |
+|------------------|------|
 | wrapper: Wrapper | 查询条件 |
 
 | 返回值    | 说明  |
@@ -171,72 +223,80 @@ export class EmpMapper extends BaseMapper<Employee> {
 | number | 统计值 |
 
 ```typescript
-// 统计总数
-const num:number = await this.empMapper.count(new Wrapper())
+const num:number = await this.mapper.count(new Wrapper())
 ```
 
 ### getObject
 
-查询符合条件的记录  
-返回值： 查询结果，一个对象类型的数组
+查询符合条件的记录，返回一个对象
 
-| 入参             | 说明   |
-|----------------|------|
+| 入参               | 说明   |
+|------------------|------|
 | wrapper: Wrapper | 搜索条件 |
 
-| 返回值         | 说明   |
-|-------------|------|
-| AnyObject[] | 对象数组 |
+| 返回值        | 说明   |
+|------------|------|
+| EsObject[] | 对象数组 |
 
 ```typescript
-// 查询name等于111的数据
-const objList = await this.empMapper.getObject(new Wrapper().eq('name', '111'))
+const res: ESObject = await this.mapper.getObject(new Wrapper().eq('name', '123'))
 ```
 
 ### getObjectBySql
 
-通过SQL，查询符合条件的记录  
-返回值： 查询结果，一个对象类型的数组
+传入SQL，查询符合条件的记录，返回对象数组
 
 | 入参                                  | 说明    |
 |-------------------------------------|-------|
 | sql: string                         | sql语句 |
 | params: relationalStore.ValueType[] | 占位符参数 |
 
-| 返回值         | 说明   |
-|-------------|------|
-| AnyObject[] | 对象数组 |
+| 返回值        | 说明   |
+|------------|------|
+| EsObject[] | 对象数组 |
 
 ```typescript
-// 统计行数
-const res = await this.mapper.getObjectBySql('select count(*) from t_emp', [])
+const res: ESObject = await this.mapper.getObjectBySql('select count(*) from t_emp where age = ? ', [13])
 ```
 
 ### getList
 
-查询符合条件的记录  
-返回值： 查询结果，泛型T的数组
+查询符合条件的记录，返回对象数组
 
-| 入参             | 说明   |
-|----------------|------|
+| 入参               | 说明   |
+|------------------|------|
 | wrapper: Wrapper | 搜索条件 |
 
-| 返回值 | 说明     |
-|-----|--------|
-| T[] | 泛型T的数组 |
+| 返回值 | 说明   |
+|-----|------|
+| T[] | 对象数组 |
 
 ```typescript
-// 查询name等于111的数据，返回数组
-const list = await this.empMapper.getList(new Wrapper().eq('name', '111'))
+const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
+```
+
+### getOne
+
+查询符合条件的第一条数据
+
+| 入参               | 说明   |
+|------------------|------|
+| wrapper: Wrapper | 搜索条件 |
+
+| 返回值 | 说明   |
+|-----|------|
+| T   | 实体对象 |
+
+```typescript
+const res = await this.mapper.getOne(new Wrapper().eq('name', '123'))
 ```
 
 ### getPage
 
-分页查询符合条件的记录  
-返回值：分页查询结果，包含记录列表和总记录数
+分页查询符合条件的记录，返回分页结果
 
-| 入参             | 说明   |
-|----------------|------|
+| 入参               | 说明   |
+|------------------|------|
 | wrapper: Wrapper | 搜索条件 |
 
 | 返回值     | 说明     |
@@ -252,7 +312,7 @@ const list = await this.empMapper.getList(new Wrapper().eq('name', '111'))
 
 ```typescript
 // 查询第一页的数据，返回Page对象
-const page = await this.empMapper.getPage(1, 10)
+const page = await this.mapper.getPage(1, 10)
 // 总数
 const total = page.total
 // 当前页
@@ -265,31 +325,29 @@ const record = page.record
 
 ### getById
 
-根据主键ID查询  
-返回值： 查询结果，可能是undefined或泛型T的对象
+根据主键查询，返回一个实体对象
 
 | 入参            | 说明  |
 |---------------|-----|
 | id: ValueType | 主键值 |
 
-| 返回值            | 说明                    |
-|----------------|-----------------------|
-| T 或  undefined | 存在返回结果，不存在返回undefined |
+| 返回值           | 说明                      |
+|---------------|-------------------------|
+| T 或 undefined | 存在返回实体对象，不存在返回undefined |
 
 ```typescript
-// 查询主键ID等于14的数据
-this.empMapper.getById(14)
+const res = await this.mapper.getById(3)
 ```
 
 ### insert
 
 插入一条记录
-返回值：void，失败则抛出异常
+
 注：若插入的某个字段为空，可以设置为 `undefined或null`
 
-| 入参     | 说明       |
-|--------|----------|
-| obj: T | 一个泛型T的对象 |
+| 入参     | 说明   |
+|--------|------|
+| obj: T | 实体对象 |
 
 | 返回值  | 说明       |
 |------|----------|
@@ -299,18 +357,17 @@ this.empMapper.getById(14)
 const emp = new Employee()
 emp.name = '新添加的'
 // 如果是自增，id可以不用赋值
-this.empMapper.insert(emp)
+this.mapper.insert(emp)
 ```
 
-### updateById
+### insertBatch
 
-根据 ID ，更新符合条件的记录
-返回值：void，失败则抛出异常
-注：不想更新的字段必须设置为`undefined`，其他值包括null，都会更新到数据库
+插入一组记录  
+注：若插入的某个字段为空，可以设置为 `undefined或null`
 
-| 入参     | 说明              |
-|--------|-----------------|
-| obj: T | 一个泛型T的对象，主键不能为空 |
+| 入参        | 说明   |
+|-----------|------|
+| list: T[] | 实体对象 |
 
 | 返回值  | 说明       |
 |------|----------|
@@ -318,19 +375,38 @@ this.empMapper.insert(emp)
 
 ```typescript
 const emp = new Employee()
-emp.id = 20
-emp.name = '张三'
-// 根据主键id修改
-this.empMapper.updateById(emp)
+emp.name = '新添加的'
+// 如果是自增，id可以不用赋值
+this.mapper.insertBatch([emp])
+```
+
+### updateById
+
+根据主键更新符合条件的记录
+
+注：不想更新的字段必须设置为`undefined`或者不传入，其他值包括null，都会更新到数据库
+
+| 入参     | 说明          |
+|--------|-------------|
+| obj: T | 一个对象，主键不能为空 |
+
+| 返回值  | 说明       |
+|------|----------|
+| void | 执行失败抛出异常 |
+
+```typescript
+const emp = new Employee()
+emp.id = 3
+emp.name = '修改'
+await this.mapper.updateById(emp)
 ```
 
 ### update
 
-通过指定条件更新数据  
-返回值：void，失败则抛出异常
+通过指定条件更新数据
 
-| 入参             | 说明   |
-|----------------|------|
+| 入参               | 说明   |
+|------------------|------|
 | wrapper: Wrapper | 更新条件 |
 
 | 返回值  | 说明       |
@@ -338,14 +414,15 @@ this.empMapper.updateById(emp)
 | void | 执行失败抛出异常 |
 
 ```typescript
-// 将name等于张三的数据，改为name等于李四
-this.empMapper.update(new Wrapper().set('name', '李四').eq('name', '张三'))
+// 将name=李四的数据修改为张三
+await this.mapper.update(new Wrapper()
+  .set('name', '张三')
+  .eq('name', '李四'))
 ```
 
 ### deleteById
 
-根据 ID ，删除数据  
-返回值：void，失败则抛出异常
+根据主键删除数据
 
 | 入参            | 说明  |
 |---------------|-----|
@@ -357,16 +434,15 @@ this.empMapper.update(new Wrapper().set('name', '李四').eq('name', '张三'))
 
 ```typescript
 // 删除主键ID等于5的数据
-this.empMapper.deleteById(5)
+this.mapper.deleteById(5)
 ```
 
 ### delete
 
-通过指定条件删除数据  
-返回值：void，失败则抛出异常
+通过指定条件删除数据
 
-| 入参             | 说明   |
-|----------------|------|
+| 入参               | 说明   |
+|------------------|------|
 | wrapper: Wrapper | 删除条件 |
 
 | 返回值  | 说明       |
@@ -375,17 +451,18 @@ this.empMapper.deleteById(5)
 
 ```typescript
 // 删除name等于111的数据
-this.empMapper.delete(new Wrapper().eq('name', '111'))
+this.mapper.delete(new Wrapper().eq('name', '111'))
 ```
 
 ### getConnection
 
-获取一个数据库的连接对象`Connection`，可以直接进行SQL语句的调用  
+获取一个数据库的连接对象`Connection`，调用Connection可以直接进行SQL语句的调用
+
 参考上面的`建表、连接查询等复杂SQl，采用手写SQL方法`
 
-#### init
+#### create
 
-获取一个新的数据库连接
+static函数，获取一个新的数据库连接
 
 | 入参                                  | 说明    |
 |-------------------------------------|-------|
@@ -397,7 +474,7 @@ this.empMapper.delete(new Wrapper().eq('name', '111'))
 
 #### execDML
 
-`execDML`是数据操纵函数（DML），执行创建、添加、修改语句
+数据操纵函数（DML），执行插入、删除、修改语句
 
 | 入参          | 说明                                  |
 |-------------|-------------------------------------|
@@ -410,7 +487,7 @@ this.empMapper.delete(new Wrapper().eq('name', '111'))
 
 #### execDQL
 
-`execDQL`是数据查询函数，执行查询语句
+是数据查询函数，执行select语句
 
 | 入参          | 说明                                  |
 |-------------|-------------------------------------|
@@ -439,6 +516,18 @@ this.empMapper.delete(new Wrapper().eq('name', '111'))
 
 ## 条件构造器介绍
 
+### select
+
+默认查询为： `select *`
+调用select函数，将默认的 `*` 更改为指定字段  
+注：若查询特殊字段，例如聚合统计、字段别名，建议使用`getObject/getObjectBySql`方法，将结果从any对象中取出
+
+```typescript
+const res: ESObject[] = await this.mapper.getObject(new Wrapper()
+  .groupBy('age')
+  .select('age', 'count(*)'))
+```
+
 ### set
 
 在update语句中，用于指定要修改的列及其新值
@@ -446,8 +535,8 @@ this.empMapper.delete(new Wrapper().eq('name', '111'))
 ```typescript
 // 更新`name`等于`张三`的数据，将`name`值更改为`李四`
 new Wrapper()
-   .set('name', '李四')
-   .eq('name', '张三')
+  .set('name', '李四')
+  .eq('name', '张三')
 ```
 
 ### eq
@@ -529,7 +618,6 @@ new Wrapper().notIn('age', [18, 19, 20])
 ```typescript
 // 查询 age 在 18-60之间的数据
 new Wrapper().between('age', 18, 60)
-
 ```
 
 ### notBetween
@@ -539,7 +627,6 @@ new Wrapper().between('age', 18, 60)
 ```typescript
 // 查询 age 不在 18-60之间的数据
 new Wrapper().notBetween('age', 18, 60)
-
 ```
 
 ### like
@@ -601,14 +688,10 @@ new Wrapper().orderByDesc('id')
 设置查询结果的分组条件。通过指定一个或多个字段
 
 ```typescript
-// 依次根据id、name进行分组
-new Wrapper().groupBy('id', 'name')
-```
-
-生成的sql
-
-```
-SELECT * FROM user GROUP BY id, name
+// 可以用getList，类型仅在编译期限制
+const res: ESObject[] = await this.mapper.getObject(new Wrapper()
+  .groupBy('age')
+  .select('age', 'count(*)'))
 ```
 
 ### having
@@ -616,14 +699,11 @@ SELECT * FROM user GROUP BY id, name
 设置 HAVING 子句，过滤分组后的结果。通常与 GROUP BY 一起使用，用于对分组后的数据进行条件筛选
 
 ```typescript
-// 根据name分组，过滤分组条件是name不等于张三
-new Wrapper().groupBy('name').having(`name != '张三'`)
-```
-
-生成的sql
-
-```
-SELECT * FROM user GROUP BY name HAVING name != '张三'
+// 可以用getList，类型仅在编译期限制
+const res: ESObject[] = await this.mapper.getList(new Wrapper()
+  .select('age', 'count(*)')
+  .groupBy('age')
+  .having(`age != 30`))
 ```
 
 ### or
@@ -632,44 +712,29 @@ SELECT * FROM user GROUP BY name HAVING name != '张三'
 
 ```typescript
 new Wrapper().eq('name', '111')
-   .or(new Wrapper().eq('name', '222').eq('age', 18))
+  .or(new Wrapper().eq('name', '222').eq('age', 18))
 ```
 
 生成SQL为
 
 ```
-name = '111' or ( name = '222' and age=18 )
+where name = '111' or ( name = '222' and age=18 )
 ```
 
 ### and
 
-用于在查询条件中添加 AND 逻辑。通过调用 and 方法，可以创建 AND 嵌套条件，即在一个 AND 逻辑块中包含多个查询条件
+用于在查询条件中添加 AND 逻辑，在一个 AND 逻辑块中包含多个查询条件
 
 ```typescript
 new Wrapper()
-   .eq('name', '111')
-   .and(new Wrapper().notEq('name', '222'))
+  .eq('name', '111')
+  .and(new Wrapper().notEq('name', '222'))
 ```
 
 生成SQL为
 
 ```
-name = '111' and ( name != '222' )
-```
-
-### select
-
-默认查询为： `select *`
-调用select函数，将默认的 `*` 更改为指定内容  
-注：若添加了额外内容，例如聚合函数、字段别名，建议使用`getObject`方法，将结果从对象中取出（getObjectBySql也可以）
-
-```typescript
-//指定字段
-new Wrapper().select('id,name,age')
-//使用函数
-new Wrapper().select('count(*),sum(age)')
-//字段别名
-new Wrapper().select('age as nianling')
+where name = '111' and ( name != '222' )
 ```
 
 ## 其他功能
@@ -679,44 +744,40 @@ new Wrapper().select('age as nianling')
 参考如下示例
 
 ```typescript
-import { Employee } from '../entity/Employee'
 import { relationalStore } from '@kit.ArkData'
-import { BaseMapper, MapperParam } from 'rdbplus'
+import { BaseMapper } from 'rdbplus'
+import { Employee } from './Employee'
 
-// 实现一个 getRow
-const getRow = (res: relationalStore.ResultSet) => {
-   const emp = new Employee()
-   emp.id = res.getLong(res.getColumnIndex('id'))
-   emp.name = res.getString(res.getColumnIndex('name'))
-   return emp
-}
+/**
+ * 多数据源示例
+ */
+export class MapperMultiple {
+  private static mapper1: BaseMapper<Employee>
+  private static mapper2: BaseMapper<Employee>
 
-export class EmpMapper extends BaseMapper<Employee> {
-   // 构造函数，仅接收参数，将参数传给super
-   private constructor(config: relationalStore.StoreConfig) {
-      super({ tableName: 't_emp', primaryKey: 'id' }, getRow, config)
-   }
+  // 单例模式 db1
+  static getInstance1DB() {
+    if (!MapperMultiple.mapper1) {
+      MapperMultiple.mapper1 = BaseMapper.build<Employee>({
+        class: Employee,
+        dbName: 'db1',
+        securityLevel: relationalStore.SecurityLevel.S1
+      })
+    }
+    return MapperMultiple.mapper1
+  }
 
-   // 手动 new出EmpMapper
-   // 数据库1
-   static getDemo1DB(): EmpMapper {
-      return new EmpMapper(
-         {
-            name: 'Demo1DB.db',
-            securityLevel: relationalStore.SecurityLevel.S1
-         }
-      )
-   }
-
-   // 数据库2
-   static getDemo2DB(): EmpMapper {
-      return new EmpMapper(
-         {
-            name: 'Demo2DB.db',
-            securityLevel: relationalStore.SecurityLevel.S1
-         }
-      )
-   }
+  // 单例模式 db2
+  static getInstance2DB() {
+    if (!MapperMultiple.mapper2) {
+      MapperMultiple.mapper2 = BaseMapper.build<Employee>({
+        class: Employee,
+        dbName: 'db2',
+        securityLevel: relationalStore.SecurityLevel.S1
+      })
+    }
+    return MapperMultiple.mapper2
+  }
 }
 ```
 
@@ -731,23 +792,22 @@ import { EmpMapper } from '../mapper/EmpMapper'
 @Entry
 @Component
 struct Index {
-  empMapper = new EmpMapper()
+  mapper = new EmpMapper()
 
   build() {
 
     Row() {
 
       Button('事务成功').onClick(async (event: ClickEvent) => {
-      
         // 获取一个db连接
-        const db = await this.empMapper.getConnection()
+        const db = await this.mapper.getConnection()
         try {
           //开启事务
           db.beginTransaction()
           const emp = new Employee()
           emp.name = '事务'
           // 将 db 传进去，保持所有操作在同一连接上
-          this.empMapper.insert(emp, db)
+          this.mapper.insert(emp, db)
           //提交事务
           db.commit()
         } catch (e) {
@@ -761,15 +821,14 @@ struct Index {
       })
 
       Button('事务失败').onClick(async (event: ClickEvent) => {
-      
         // 获取一个db连接
-        const db = await this.empMapper.getConnection()
+        const db = await this.mapper.getConnection()
         try {
           db.beginTransaction()
           const emp = new Employee()
           emp.name = '事务失败'
           // 将 db 传进去，保持所有操作在同一连接上
-          this.empMapper.insert(emp, db)
+          this.mapper.insert(emp, db)
           // 抛出异常，回滚事务
           throw new Error()
           //提交事务

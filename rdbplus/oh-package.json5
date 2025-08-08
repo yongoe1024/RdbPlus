@@ -1,7 +1,7 @@
 {
   "name": "rdbplus",
-  "version": "2.0.1",
-  "description": "一个sqlite的增强工具，无需编写sql代码，一行搞定增删改查，为简化开发、提高效率而生",
+  "version": "3.0.0",
+  "description": "哈啰出行SQLite的ORM框架，无需编写sql代码，通过装饰器解析表结构，一行搞定增删改查",
   "main": "Index.ets",
   "author": "yongoe",
   "homepage": "https://github.com/yongoe1024",
@@ -12,7 +12,8 @@
     "工具类",
     "数据库",
     "SQLite",
-    "无SQL",
-    "零入侵"
-  ],
+    "零SQL",
+    "ORM",
+    "rdb"
+  ]
 }

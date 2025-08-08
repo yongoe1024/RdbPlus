@@ -3,9 +3,9 @@
  * @since 2024/10/15
  */
 import { Wrapper } from 'rdbplus'
-import { Employee } from '../entity/Employee'
-import { EmpMapper } from '../mapper/EmpMapper'
-import { showDialog } from '../utils/MessageDialog'
+import { Employee } from './Employee'
+import { EmpMapper } from './EmpMapper'
+import { showDialog } from './MessageDialog'
 
 @Entry
 @Component
@@ -16,12 +16,12 @@ struct Index {
 
     Flex({ wrap: FlexWrap.Wrap }) {
       Button('初始化').onClick(() => {
-        this.mapper.createTable()
+        EmpMapper.createTable()
         showDialog('初始化完成，查看日志')
       })
 
       Button('count').onClick(async () => {
-        showDialog(JSON.stringify(await this.mapper.count(new Wrapper())))
+        showDialog(JSON.stringify(await this.mapper.count(new Wrapper()), null, 2))
       })
 
       Button('page').onClick(async () => {
@@ -34,86 +34,86 @@ struct Index {
         const size = page.size
         // 结果集
         const record = page.record
-        showDialog(JSON.stringify(page))
+        showDialog(JSON.stringify(page, null, 2))
       })
 
-      Button('得到对象').onClick(async () => {
-        const res = await this.mapper.getObject(new Wrapper().eq('name', '111'))
-        showDialog(JSON.stringify(res))
-      })
-
-      Button('sql得到对象').onClick(async () => {
-        const res = await this.mapper.getObjectBySql('select  count(*) from t_emp', [])
-        showDialog(JSON.stringify(res))
-      })
-
-      Button('getById').onClick(async () => {
-        const res = await this.mapper.getById(1)
-        showDialog(JSON.stringify(res))
-      })
-
-      Button('等于').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().eq('name', '111'))
+      Button('得到对象 name=123').onClick(async () => {
+        const res: ESObject = await this.mapper.getObject(new Wrapper().eq('name', '123'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('不等于').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().notEq('name', '111'))
+      Button('sql得到对象 count(*)').onClick(async () => {
+        const res: ESObject = await this.mapper.getObjectBySql('select count(*) from t_emp', [])
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('in').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().in('name', ['111', '222']))
+      Button('getById id=3').onClick(async () => {
+        const res = await this.mapper.getById(3)
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('notIn').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().notIn('name', ['111', '222']))
+      Button('等于 name==123').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('lt').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().lt('name', '333'))
+      Button('不等于 name!==123').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().notEq('name', '123'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('lte').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().and(new Wrapper()).or(new Wrapper()).lte('name', '333'))
+      Button('in 123 124').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().in('name', ['123', '124']))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('gt').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().gt('name', '333'))
+      Button('notIn 123 124').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().notIn('name', ['123', '124']))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('gte').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().gte('name', '333'))
+      Button('lt id<2').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().lt('id', 2))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('between').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().between('name', '333', '555'))
+      Button('lte id<=2').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().lte('id', 2))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('notBetween').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().notBetween('name', '333', '555'))
+      Button('gt id>2').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().gt('id', 2))
+        showDialog(JSON.stringify(res, null, 2))
+      })
+
+      Button('gte id>=2').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().gte('id', 2))
+        showDialog(JSON.stringify(res, null, 2))
+      })
+
+      Button('between id 2-4').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().between('id', 2, 4))
+        showDialog(JSON.stringify(res, null, 2))
+      })
+
+      Button('notBetween id 2-4').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().notBetween('id', 2, 4))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Divider()
         .width('100%')
-        .height(10)
+        .height(40)
         .color('#000')
 
-      Button('like').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().like('name', '333%'))
+      Button('like name 12').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().like('name', '12%'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
-      Button('notLike').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().notLike('name', '333%'))
+      Button('notLike name 12').onClick(async () => {
+        const res = await this.mapper.getList(new Wrapper().notLike('name', '12%'))
         showDialog(JSON.stringify(res, null, 2))
       })
 
@@ -139,68 +139,96 @@ struct Index {
 
       Divider()
         .width('100%')
-        .height(10)
+        .height(40)
         .color('#000')
 
-      Button('groupBy').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().groupBy('name'))
-        showDialog(JSON.stringify(res, null, 2))
-
-      })
-      Button('having').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().groupBy('name').having(`name != '333'`))
+      // 可以用getList，类型仅在编译期限制
+      Button('groupBy age=18 每种的数量').onClick(async () => {
+        const res: ESObject[] = await this.mapper.getObject(new Wrapper()
+          .groupBy('age')
+          .select('age', 'count(*)'))
         showDialog(JSON.stringify(res, null, 2))
       })
-      Button('or').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().eq('name', '111').or(new Wrapper().eq('name', '222')))
-        showDialog(JSON.stringify(res, null, 2))
-      })
-
-      Button('and').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper()
-          .eq('name', '111')
-          .and(new Wrapper().notEq('name', 222))
-        )
+      // 可以用getList，类型仅在编译期限制
+      Button('having age!=30 每种的数量').onClick(async () => {
+        const res: ESObject[] =
+          await this.mapper.getObject(new Wrapper()
+            .select('age', 'count(*)')
+            .groupBy('age')
+            .having(`age != 30`))
         showDialog(JSON.stringify(res, null, 2))
       })
 
       Divider()
         .width('100%')
-        .height(10)
+        .height(40)
         .color('#000')
 
-      Button('添加').onClick(async () => {
+      Button('批量添加').onClick(async () => {
+        const emp: Employee[] = [
+          {
+            name: '123',
+            age: 18
+          },
+          {
+            name: '124',
+            age: 18
+          },
+          {
+            name: '张三',
+            age: 20
+          },
+          {
+            name: '李四',
+            age: 20
+          },
+          {
+            name: '网二',
+            age: 21
+          },
+          {
+            name: undefined,
+            age: undefined
+          },
+          {
+            name: 'age是undefined',
+            age: undefined
+          },
+          {
+            name: undefined,
+            age: 30
+          },
+        ]
+        await this.mapper.insertBatch(emp)
+        showDialog('成功')
+      })
+
+      Button('id=3 => name=修改 updateById').onClick(async () => {
         const emp = new Employee()
-        emp.name = '新添加的'
-        showDialog(JSON.stringify(await this.mapper.insert(emp)))
+        emp.id = 3
+        emp.name = '修改'
+        await this.mapper.updateById(emp)
+        showDialog('成功')
       })
 
-      Button('id=20,updateById').onClick(async () => {
-        const emp = new Employee()
-        emp.id = 20
-        emp.name = '根据id修改'
-        showDialog(JSON.stringify(await this.mapper.updateById(emp)))
+      Button('name=修改 => 使用set修改 update').onClick(async () => {
+        await this.mapper.update(new Wrapper().set('name', '使用set修改').eq('name', '修改'))
+        showDialog('成功')
       })
 
-      Button('修改').onClick(async () => {
-        const boo = await this.mapper.update(new Wrapper().set('name', '使用set修改').eq('name', '根据id修改'))
-        showDialog(JSON.stringify(boo))
+      Button('删除 name 使用set修改').onClick(async () => {
+        await this.mapper.delete(new Wrapper().eq('name', '使用set修改'))
+        showDialog('成功')
       })
 
-      Button('删除').onClick(async () => {
-        const boo = await this.mapper.delete(new Wrapper().eq('name', '111'))
-        showDialog('name==111被删除', JSON.stringify(boo))
-
-      })
-
-      Button('删除byId').onClick(async () => {
-        const boo = await this.mapper.deleteById(5)
-        showDialog('id==5被删除', JSON.stringify(boo))
+      Button('deleteById id =3').onClick(async () => {
+        await this.mapper.deleteById(3)
+        showDialog('成功')
       })
 
       Divider()
         .width('100%')
-        .height(10)
+        .height(40)
         .color('#000')
 
       Button('事务成功').onClick(async (event: ClickEvent) => {
