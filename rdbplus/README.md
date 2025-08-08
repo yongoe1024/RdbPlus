@@ -1,37 +1,37 @@
 # rdb-plus 使用文档
+
 - [简介](#简介)
 - [版本说明](#版本说明)
 - [下载安装](#下载安装)
 - [使用案例](#使用案例)
 - [功能介绍](#功能介绍)
 - [引入教程](#引入教程)
-  - [初始化](#初始化)
-  - [第一步：创建实体类](#第一步创建实体类)
-  - [第二步：创建Mapper类](#第二步创建mapper类)
-  - [第三步：页面中调用](#第三步页面中调用)
-  - [建表、连接查询等复杂SQl，采用手写SQL方法](#建表连接查询等复杂sql采用手写sql方法)
+    - [初始化](#初始化)
+    - [第一步：创建实体类](#第一步创建实体类)
+    - [第二步：创建Mapper类](#第二步创建mapper类)
+    - [第三步：页面中调用](#第三步页面中调用)
+    - [建表、连接查询等复杂SQl，采用手写SQL方法](#建表连接查询等复杂sql采用手写sql方法)
 - [API介绍](#api介绍)
-  - [count](#count)
-  - [getObject](#getobject)
-  - [getObjectBySql](#getobjectbysql)
-  - [getList](#getlist)
-  - [getOne](#getone)
-  - [getPage](#getpage)
-  - [getById](#getbyid)
-  - [insert](#insert)
-  - [insertBatch](#insertbatch)
-  - [updateById](#updatebyid)
-  - [update](#update)
-  - [deleteById](#deletebyid)
-  - [delete](#delete)
-  - [getConnection](#getconnection)
+    - [count](#count)
+    - [getObject](#getobject)
+    - [getObjectBySql](#getobjectbysql)
+    - [getList](#getlist)
+    - [getOne](#getone)
+    - [getPage](#getpage)
+    - [getById](#getbyid)
+    - [insert](#insert)
+    - [insertBatch](#insertbatch)
+    - [updateById](#updatebyid)
+    - [update](#update)
+    - [deleteById](#deletebyid)
+    - [delete](#delete)
+    - [getConnection](#getconnection)
 - [条件构造器介绍](#条件构造器介绍)
 - [其他功能](#其他功能)
-  - [多数据源](#多数据源)
-  - [事务](#事务)
+    - [多数据源](#多数据源)
+    - [事务](#事务)
 - [贡献代码](#贡献代码)
 - [开源协议](#开源协议)
-
 
 ## 简介
 
@@ -60,7 +60,6 @@ OpenHarmony ohpm
 https://gitee.com/yongoe/RdbPlus/tree/main/entry/src/main/ets
 
 https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
-
 
 ## 功能介绍
 
@@ -92,18 +91,20 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 
 在`EntryAbility` 的 `onWindowStageCreate` 中调用 `Connection.init()` 进行初始化
 
-传入两个参数：Context、日志DbLogger（可空）
+传入两个参数：Context、日志DbLogger（可空），不需要日志可以不传
 
 rdbplus提供了`DbLogger`，可以自行继承`Logger`接口构造日志对象
 
 ```typescript
-export default class EntryAbility extends UIAbility {
-  onWindowStageCreate(windowStage: window.WindowStage): void {
+import { UIAbility } from '@kit.AbilityKit';
+import { window } from '@kit.ArkUI';
+import { Connection, DbLogger } from 'rdbplus';
 
+export default class EntryAbility extends UIAbility {
+  onWindowStageCreate(windowStage: window.WindowStage) {
     windowStage.loadContent('pages/Index', (err) => {
-      windowStage.getMainWindow().then(res => {
-        Connection.init(res.getUIContext().getHostContext(), new DbLogger())
-      })
+      let win = windowStage.getMainWindowSync()
+      Connection.init(win.getUIContext().getHostContext(), new DbLogger())
     });
   }
 }
@@ -157,7 +158,7 @@ export class EmpMapper {
     if (!EmpMapper.mapper) {
       EmpMapper.mapper = BaseMapper.build<Employee>({
         class: Employee,
-        dbName: '表名',
+        dbName: 'ass',
         securityLevel: relationalStore.SecurityLevel.S1
       })
     }
@@ -165,18 +166,22 @@ export class EmpMapper {
   }
 
   /**
-   * 可以从实例中获取Connection，直接操作SQL语句
+   * 创建表
    */
   static async createTable() {
-    const db = await EmpMapper.getInstance().getConnection()
-    await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`, [])
-    await db.execDML(
-      `create table if not exists "t_emp" (
+    try {
+      const db = await EmpMapper.getInstance().getConnection()
+      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`, [])
+      await db.execDML(
+        `create table if not exists "t_emp" (
           id integer primary key autoincrement,
           name varchar(20),
           age integer
       )`, [])
-    await db.close()
+      await db.close()
+    } catch (e) {
+      console.error(e)
+    }
   }
 }
 ```
@@ -190,13 +195,25 @@ struct Index {
   mapper = EmpMapper.getInstance()
 
   build() {
-     Button('初始化').onClick(() => {
-        EmpMapper.createTable()
+    Column() {
+      Button('初始化').onClick(() => {
+        try {
+          await EmpMapper.createTable()
+          showDialog('初始化完成，查看日志')
+        } catch (e) {
+          console.error(e)
+        }
       })
-      
-    Button('等于 name==123').onClick(async () => {
-        const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
+
+      Button('count').onClick(async () => {
+        try {
+          let num = await this.mapper.count(new Wrapper())
+          showDialog(num + '')
+        } catch (e) {
+          console.error(e)
+        }
       })
+    }
   }
 }
 ```
@@ -223,7 +240,11 @@ struct Index {
 | number | 统计值 |
 
 ```typescript
-const num:number = await this.mapper.count(new Wrapper())
+try {
+  let num = await this.mapper.count(new Wrapper())
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getObject
@@ -239,7 +260,11 @@ const num:number = await this.mapper.count(new Wrapper())
 | EsObject[] | 对象数组 |
 
 ```typescript
-const res: ESObject = await this.mapper.getObject(new Wrapper().eq('name', '123'))
+try {
+  const res: ESObject = await this.mapper.getObject(new Wrapper().eq('name', '123'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getObjectBySql
@@ -256,7 +281,11 @@ const res: ESObject = await this.mapper.getObject(new Wrapper().eq('name', '123'
 | EsObject[] | 对象数组 |
 
 ```typescript
-const res: ESObject = await this.mapper.getObjectBySql('select count(*) from t_emp where age = ? ', [13])
+try {
+  const res: ESObject = await this.mapper.getObjectBySql('select count(*) from t_emp where age = ? ', [13])
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getList
@@ -272,7 +301,11 @@ const res: ESObject = await this.mapper.getObjectBySql('select count(*) from t_e
 | T[] | 对象数组 |
 
 ```typescript
-const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
+try {
+  const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getOne
@@ -288,7 +321,11 @@ const res = await this.mapper.getList(new Wrapper().eq('name', '123'))
 | T   | 实体对象 |
 
 ```typescript
-const res = await this.mapper.getOne(new Wrapper().eq('name', '123'))
+try {
+  const res = await this.mapper.getOne(new Wrapper().eq('name', '123'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getPage
@@ -311,16 +348,20 @@ const res = await this.mapper.getOne(new Wrapper().eq('name', '123'))
 | record  | 结果集  |
 
 ```typescript
-// 查询第一页的数据，返回Page对象
-const page = await this.mapper.getPage(1, 10)
-// 总数
-const total = page.total
-// 当前页
-const current = page.current
-// 每页条数
-const size = page.size
-// 结果集
-const record = page.record
+try {
+  // 查询第一页的数据，返回Page对象
+  const page = await this.mapper.getPage(1, 10)
+  // 总数
+  const total = page.total
+  // 当前页
+  const current = page.current
+  // 每页条数
+  const size = page.size
+  // 结果集
+  const record = page.record
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getById
@@ -336,7 +377,11 @@ const record = page.record
 | T 或 undefined | 存在返回实体对象，不存在返回undefined |
 
 ```typescript
-const res = await this.mapper.getById(3)
+try {
+  const res = await this.mapper.getById(3)
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### insert
@@ -354,15 +399,20 @@ const res = await this.mapper.getById(3)
 | void | 执行失败抛出异常 |
 
 ```typescript
-const emp = new Employee()
-emp.name = '新添加的'
-// 如果是自增，id可以不用赋值
-this.mapper.insert(emp)
+try {
+  // 如果是自增，id可以不用赋值
+  const emp = new Employee()
+  emp.name = '新添加的'
+  this.mapper.insert(emp)
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### insertBatch
 
-插入一组记录  
+插入一组记录
+
 注：若插入的某个字段为空，可以设置为 `undefined或null`
 
 | 入参        | 说明   |
@@ -374,10 +424,14 @@ this.mapper.insert(emp)
 | void | 执行失败抛出异常 |
 
 ```typescript
-const emp = new Employee()
-emp.name = '新添加的'
-// 如果是自增，id可以不用赋值
-this.mapper.insertBatch([emp])
+try {
+  // 如果是自增，id可以不用赋值
+  const emp = new Employee()
+  emp.name = '新添加的'
+  this.mapper.insertBatch([emp])
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### updateById
@@ -395,10 +449,14 @@ this.mapper.insertBatch([emp])
 | void | 执行失败抛出异常 |
 
 ```typescript
-const emp = new Employee()
-emp.id = 3
-emp.name = '修改'
-await this.mapper.updateById(emp)
+try {
+  const emp = new Employee()
+  emp.id = 3
+  emp.name = '修改'
+  await this.mapper.updateById(emp)
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### update
@@ -414,10 +472,14 @@ await this.mapper.updateById(emp)
 | void | 执行失败抛出异常 |
 
 ```typescript
-// 将name=李四的数据修改为张三
-await this.mapper.update(new Wrapper()
-  .set('name', '张三')
-  .eq('name', '李四'))
+try {
+  // 将name=李四的数据修改为张三
+  await this.mapper.update(new Wrapper()
+    .set('name', '张三')
+    .eq('name', '李四'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### deleteById
@@ -433,8 +495,12 @@ await this.mapper.update(new Wrapper()
 | void | 执行失败抛出异常 |
 
 ```typescript
-// 删除主键ID等于5的数据
-this.mapper.deleteById(5)
+try {
+  // 删除主键ID等于5的数据
+  this.mapper.deleteById(5)
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### delete
@@ -450,15 +516,19 @@ this.mapper.deleteById(5)
 | void | 执行失败抛出异常 |
 
 ```typescript
-// 删除name等于111的数据
-this.mapper.delete(new Wrapper().eq('name', '111'))
+try {
+  // 删除name等于111的数据
+  this.mapper.delete(new Wrapper().eq('name', '111'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### getConnection
 
 获取一个数据库的连接对象`Connection`，调用Connection可以直接进行SQL语句的调用
 
-参考上面的`建表、连接查询等复杂SQl，采用手写SQL方法`
+参考上面的[建表、连接查询等复杂SQl，采用手写SQL方法](#建表连接查询等复杂sql采用手写sql方法)
 
 #### create
 
@@ -519,13 +589,19 @@ static函数，获取一个新的数据库连接
 ### select
 
 默认查询为： `select *`
-调用select函数，将默认的 `*` 更改为指定字段  
+
+调用select函数，将默认的 `*` 更改为指定字段
+
 注：若查询特殊字段，例如聚合统计、字段别名，建议使用`getObject/getObjectBySql`方法，将结果从any对象中取出
 
 ```typescript
-const res: ESObject[] = await this.mapper.getObject(new Wrapper()
-  .groupBy('age')
-  .select('age', 'count(*)'))
+try {
+  const res: ESObject[] = await this.mapper.getObject(new Wrapper()
+    .groupBy('age')
+    .select('age', 'count(*)'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### set
@@ -688,10 +764,14 @@ new Wrapper().orderByDesc('id')
 设置查询结果的分组条件。通过指定一个或多个字段
 
 ```typescript
-// 可以用getList，类型仅在编译期限制
-const res: ESObject[] = await this.mapper.getObject(new Wrapper()
-  .groupBy('age')
-  .select('age', 'count(*)'))
+// 注：可以用getList，类型限制仅在编译期，不影响运行时取出结果
+try {
+  const res: ESObject[] = await this.mapper.getObject(new Wrapper()
+    .groupBy('age')
+    .select('age', 'count(*)'))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### having
@@ -699,11 +779,15 @@ const res: ESObject[] = await this.mapper.getObject(new Wrapper()
 设置 HAVING 子句，过滤分组后的结果。通常与 GROUP BY 一起使用，用于对分组后的数据进行条件筛选
 
 ```typescript
-// 可以用getList，类型仅在编译期限制
-const res: ESObject[] = await this.mapper.getList(new Wrapper()
-  .select('age', 'count(*)')
-  .groupBy('age')
-  .having(`age != 30`))
+// 注：可以用getList，类型限制仅在编译期，不影响运行时取出结果
+try {
+  const res: ESObject[] = await this.mapper.getList(new Wrapper()
+    .select('age', 'count(*)')
+    .groupBy('age')
+    .having(`age != 30`))
+} catch (e) {
+  console.error(e)
+}
 ```
 
 ### or
@@ -785,71 +869,63 @@ export class MapperMultiple {
 
 参考如下代码
 
-```
-import { Employee } from '../entity/Employee'
-import { EmpMapper } from '../mapper/EmpMapper'
-
-@Entry
-@Component
-struct Index {
-  mapper = new EmpMapper()
-
-  build() {
-
-    Row() {
-
-      Button('事务成功').onClick(async (event: ClickEvent) => {
-        // 获取一个db连接
-        const db = await this.mapper.getConnection()
-        try {
-          //开启事务
-          db.beginTransaction()
-          const emp = new Employee()
-          emp.name = '事务'
-          // 将 db 传进去，保持所有操作在同一连接上
-          this.mapper.insert(emp, db)
-          //提交事务
-          db.commit()
-        } catch (e) {
-          // 回滚
-          db.rollBack()
-        } finally {
-          // 关闭连接
-          db.close()
-        }
-        
-      })
-
-      Button('事务失败').onClick(async (event: ClickEvent) => {
-        // 获取一个db连接
-        const db = await this.mapper.getConnection()
-        try {
-          db.beginTransaction()
-          const emp = new Employee()
-          emp.name = '事务失败'
-          // 将 db 传进去，保持所有操作在同一连接上
-          this.mapper.insert(emp, db)
-          // 抛出异常，回滚事务
-          throw new Error()
-          //提交事务
-          db.commit()
-        } catch (e) {
-          // 回滚
-          db.rollBack()
-        } finally {
-          // 关闭连接
-          db.close()
-        }
-        
-      })
+```typescript
+// 成功
+// 获取一个db连接
+this.mapper.getConnection()
+  .then(async db => {
+    try {
+      db.beginTransaction()
+      const emp = new Employee()
+      emp.name = '事务'
+      emp.age = 44
+      // 将 db 传进去，保持所有操作在同一连接上
+      await this.mapper.insert(emp, db)
+      //提交事务
+      db.commit()
+    } catch (e) {
+      // 回滚
+      db.rollBack()
+    } finally {
+      // 关闭连接
+      db.close()
     }
-  }
-}
+  })
+  .catch(() => {
+    console.log('db获取失败')
+  })
+
+// 失败
+// 获取一个db连接
+this.mapper.getConnection()
+  .then(async db => {
+    try {
+      db.beginTransaction()
+      const emp = new Employee()
+      emp.name = '事务失败'
+      // 将 db 传进去，保持所有操作在同一连接上
+      await this.mapper.insert(emp, db)
+      // 抛出异常
+      throw new Error('我的异常,事务失败')
+    } catch (e) {
+      // 回滚
+      db.rollBack()
+      console.error(e)
+    } finally {
+      // 关闭连接
+      db.close()
+    }
+  })
+  .catch(() => {
+    console.log('db获取失败')
+  })
 ```
 
 ## 贡献代码
 
 使用过程中发现任何问题都可以提 `Issue`，也欢迎您发 `PR`
+
+QQ交流群：1056151906
 
 https://gitee.com/yongoe/RdbPlus
 

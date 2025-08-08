@@ -2,7 +2,6 @@ import { relationalStore } from '@kit.ArkData'
 import { BaseMapper } from 'rdbplus'
 import { Employee } from './Employee'
 
-
 export class EmpMapper {
   private static mapper: BaseMapper<Employee>
 
@@ -18,16 +17,22 @@ export class EmpMapper {
     return EmpMapper.mapper
   }
 
-
+  /**
+   * 创建表
+   */
   static async createTable() {
-    const db = await EmpMapper.getInstance().getConnection()
-    await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`, [])
-    await db.execDML(
-      `create table if not exists "t_emp" (
+    try {
+      const db = await EmpMapper.getInstance().getConnection()
+      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`, [])
+      await db.execDML(
+        `create table if not exists "t_emp" (
           id integer primary key autoincrement,
           name varchar(20),
           age integer
       )`, [])
-    await db.close()
+      await db.close()
+    } catch (e) {
+      console.error(e)
+    }
   }
 }

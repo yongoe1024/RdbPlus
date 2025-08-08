@@ -7,14 +7,18 @@ import { Logger } from '../log/Logger'
  */
 export class Connection {
   id: string
-  private store: relationalStore.RdbStore | undefined = undefined
-  static context?: Context
-  static logger?: Logger
+  private store?: relationalStore.RdbStore
+  static context?: Context = undefined
+  static logger?: Logger = undefined
 
   /**
    * 初始化
    */
   static init(context?: Context, logger?: Logger) {
+    if (context === undefined) {
+      console.error('rdb初始化失败，context为空')
+      return
+    }
     Connection.context = context
     Connection.logger = logger
   }
@@ -26,11 +30,12 @@ export class Connection {
   /**
    * 创建新连接
    */
-  static async create(config: relationalStore.StoreConfig) {
-    const db = new Connection()
+  static async create(config: relationalStore.StoreConfig): Promise<Connection> {
     if (Connection.context === undefined) {
-      throw new Error('无法获取context')
+      Connection.logger?.error('rdb创建连接失败，context为空')
+      throw new Error('rdb创建连接失败，context为空')
     }
+    const db = new Connection()
     db.store = await relationalStore.getRdbStore(Connection.context, config)
     Connection.logger?.info('connection create ', db.id)
     return db

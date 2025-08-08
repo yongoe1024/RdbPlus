@@ -59,29 +59,24 @@ export class BaseMapper<T> {
    * @returns 行数
    */
   async count(wrapper: Wrapper, db?: Connection): Promise<number> {
-    try {
-      let isClose: boolean = true
-      if (db == undefined) {
-        db = await this.getConnection()
-      } else {
-        isClose = false
-      }
-      let myWrapper = MyWrapper.build(wrapper)
-      const sql = this.sqlUtils.count(myWrapper.getWhere(),
-        myWrapper.getGroup(),
-        myWrapper.getOrder())
-      const res: relationalStore.ResultSet = await db.execDQL(sql, myWrapper.getValue())
-      res.goToFirstRow()
-      const count: number = res.getLong(0)
-      res.close()
-      if (isClose) {
-        await db.close()
-      }
-      return count
-    } catch (e) {
-      console.log(e)
-      return e
+    let isClose: boolean = true
+    if (db == undefined) {
+      db = await this.getConnection()
+    } else {
+      isClose = false
     }
+    let myWrapper = MyWrapper.build(wrapper)
+    const sql = this.sqlUtils.count(myWrapper.getWhere(),
+      myWrapper.getGroup(),
+      myWrapper.getOrder())
+    const res: relationalStore.ResultSet = await db.execDQL(sql, myWrapper.getValue())
+    res.goToFirstRow()
+    const count: number = res.getLong(0)
+    res.close()
+    if (isClose) {
+      await db.close()
+    }
+    return count
   }
 
   /**
