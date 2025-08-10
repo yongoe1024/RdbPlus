@@ -14,8 +14,10 @@ export class MapperMultiple {
     if (!MapperMultiple.mapper1) {
       MapperMultiple.mapper1 = BaseMapper.build<Employee>({
         class: Employee,
-        dbName: 'db1',
-        securityLevel: relationalStore.SecurityLevel.S1
+        config: {
+          name: 'RdbTest1.db', // 数据库文件名
+          securityLevel: relationalStore.SecurityLevel.S3, // 数据库安全级别
+        }
       })
     }
     return MapperMultiple.mapper1
@@ -26,8 +28,10 @@ export class MapperMultiple {
     if (!MapperMultiple.mapper2) {
       MapperMultiple.mapper2 = BaseMapper.build<Employee>({
         class: Employee,
-        dbName: 'db2',
-        securityLevel: relationalStore.SecurityLevel.S1
+        config: {
+          name: 'RdbTest2.db', // 数据库文件名
+          securityLevel: relationalStore.SecurityLevel.S3, // 数据库安全级别
+        }
       })
     }
     return MapperMultiple.mapper2

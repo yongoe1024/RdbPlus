@@ -1,6 +1,6 @@
 {
   "name": "rdbplus",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "哈啰出行SQLite的ORM框架，无需编写sql代码，通过装饰器解析表结构，一行搞定增删改查",
   "main": "Index.ets",
   "author": "yongoe",
@@ -9,7 +9,6 @@
   "license": "MIT License",
   "dependencies": {},
   "keywords": [
-    "工具类",
     "数据库",
     "SQLite",
     "零SQL",

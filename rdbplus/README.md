@@ -1,38 +1,5 @@
 # rdb-plus 使用文档
 
-- [简介](#简介)
-- [版本说明](#版本说明)
-- [下载安装](#下载安装)
-- [使用案例](#使用案例)
-- [功能介绍](#功能介绍)
-- [引入教程](#引入教程)
-    - [初始化](#初始化)
-    - [第一步：创建实体类](#第一步创建实体类)
-    - [第二步：创建Mapper类](#第二步创建mapper类)
-    - [第三步：页面中调用](#第三步页面中调用)
-    - [建表、连接查询等复杂SQl，采用手写SQL方法](#建表连接查询等复杂sql采用手写sql方法)
-- [API介绍](#api介绍)
-    - [count](#count)
-    - [getObject](#getobject)
-    - [getObjectBySql](#getobjectbysql)
-    - [getList](#getlist)
-    - [getOne](#getone)
-    - [getPage](#getpage)
-    - [getById](#getbyid)
-    - [insert](#insert)
-    - [insertBatch](#insertbatch)
-    - [updateById](#updatebyid)
-    - [update](#update)
-    - [deleteById](#deletebyid)
-    - [delete](#delete)
-    - [getConnection](#getconnection)
-- [条件构造器介绍](#条件构造器介绍)
-- [其他功能](#其他功能)
-    - [多数据源](#多数据源)
-    - [事务](#事务)
-- [贡献代码](#贡献代码)
-- [开源协议](#开源协议)
-
 ## 简介
 
 SQLite的ORM框架，无需编写sql代码，通过装饰器解析表结构，一行搞定增删改查
@@ -43,17 +10,22 @@ QQ交流群：1056151906
 
 ## 版本说明
 
-3.0.0 使用API `5.1.0(18)` 编译
+v3.1.0，使用API`5.1.0(18)`编译，经过测试，在低版本系统也可运行
 
-经过测试，在低版本系统也可运行
-
-[工程版本升级教程](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-integrated-project-migration)
+1. 优化初始化方法
+2. 更新REAMDE中案例，所有查询都用try-catch捕获异常信息
+3. 增加了版本管理version、备份数据库、还原数据库、删除数据库、获取原生store等函数
+4. 查询结果为实体类的实例
 
 ## 下载安装
 
-`ohpm i rdbplus`  
+1. 安装最新版 `ohpm i rdbplus` 
+2. 升级版本 `ohpm update rdbplus`，建议使用最新版避免bug
+
 OpenHarmony ohpm
 环境配置等更多内容，请参考[如何安装 OpenHarmony ohpm 包](https://ohpm.openharmony.cn/#/cn/help/downloadandinstall)
+
+[工程版本升级教程](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-integrated-project-migration)
 
 ## 使用案例
 
@@ -79,32 +51,98 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
 | deleteById     | 根据主键删除                |
 | delete         | 删除符合条件的记录             |
 
+- [引入教程](#引入教程)
+    - [初始化](#初始化)
+    - [第一步：创建实体类](#第一步创建实体类)
+    - [第二步：创建Mapper类](#第二步创建mapper类)
+    - [第三步：页面中调用](#第三步页面中调用)
+    - [创建表、数据库版本管理、复杂SQl](#创建表数据库版本管理复杂sql)
+- [API介绍](#api介绍)
+    - [count](#count)
+    - [getObject](#getobject)
+    - [getObjectBySql](#getobjectbysql)
+    - [getList](#getlist)
+    - [getOne](#getone)
+    - [getPage](#getpage)
+    - [getById](#getbyid)
+    - [insert](#insert)
+    - [insertBatch](#insertbatch)
+    - [updateById](#updatebyid)
+    - [update](#update)
+    - [deleteById](#deletebyid)
+    - [delete](#delete)
+    - [getConnection](#getconnection)
+- [Connection](#connection)
+    - [create](#create)
+    - [version](#version)
+    - [getStore](#getstore)
+    - [execDML](#execdml)
+    - [execDQL](#execdql)
+    - [beginTransaction](#begintransaction)
+    - [commit](#commit)
+    - [rollBack](#rollback)
+    - [close](#close)
+    - [backup](#backup)
+    - [restore](#restore)
+    - [deleteRdbStore](#deleterdbstore)
+- [条件构造器介绍](#条件构造器介绍)
+    - [select](#select)
+    - [set](#set)
+    - [eq](#eq)
+    - [notEq](#noteq)
+    - [lt](#lt)
+    - [lte](#lte)
+    - [gt](#gt)
+    - [gte](#gte)
+    - [in](#in)
+    - [notIn](#notin)
+    - [between](#between)
+    - [notBetween](#notbetween)
+    - [like](#like)
+    - [notLike](#notlike)
+    - [isNull](#isnull)
+    - [isNotNull](#isnotnull)
+    - [orderByAsc](#orderbyasc)
+    - [orderByDesc](#orderbydesc)
+    - [groupBy](#groupby)
+    - [having](#having)
+    - [or](#or)
+    - [and](#and)
+- [其他功能](#其他功能)
+    - [多数据源](#多数据源)
+    - [事务](#事务)
+- [贡献代码](#贡献代码)
+- [开源协议](#开源协议)
+
 ## 引入教程
 
 1. 首先引入ohpm依赖：`ohpm i rdbplus`
-2. 在`EntryAbility` 的 `onWindowStageCreate` 中调用 `Connection.init()` 进行初始化
+2. 在`EntryAbility` 的 `onCreate` 中调用 `Connection.init()` 进行初始化
 3. 创建一个数据库表对应的ets类，并用装饰器`@Table`、`@TableField`标注
-4. 创建一个class，用来做单例模式
-5. 直接在页面中获取实例，就可以调用增删改查的方法，无需编写SQL代码
+4. 调用BaseMapper.build()构造实例
+5. 在页面调用实例，使用增删改查的方法，无需编写SQL代码
 
 ### 初始化
 
-在`EntryAbility` 的 `onWindowStageCreate` 中调用 `Connection.init()` 进行初始化
+在`EntryAbility`调用 `Connection.init()` 进行初始化
 
 传入两个参数：Context、日志DbLogger（可空），不需要日志可以不传
 
-rdbplus提供了`DbLogger`，可以自行继承`Logger`接口构造日志对象
+注：rdbplus提供了`DbLogger`，可以自行继承`Logger`接口构造日志对象
 
 ```typescript
-import { UIAbility } from '@kit.AbilityKit';
+import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { Connection, DbLogger } from 'rdbplus';
 
 export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    Connection.init(this.context, new DbLogger())
+  }
+
   onWindowStageCreate(windowStage: window.WindowStage) {
     windowStage.loadContent('pages/Index', (err) => {
-      let win = windowStage.getMainWindowSync()
-      Connection.init(win.getUIContext().getHostContext(), new DbLogger())
+
     });
   }
 }
@@ -143,7 +181,7 @@ export class Employee {
 ### 第二步：创建Mapper类
 
 1. 创建static变量 `private static mapper: BaseMapper<Employee>`
-2. 使用 `BaseMapper.build()` 创建实例，三个参数分别为`Employee实体类`，`数据库名`，`安全级别`
+2. 使用 `BaseMapper.build()`创建实例，参数分别为`实体类`，`数据库配置`
 
 ```typescript
 import { relationalStore } from '@kit.ArkData'
@@ -158,30 +196,16 @@ export class EmpMapper {
     if (!EmpMapper.mapper) {
       EmpMapper.mapper = BaseMapper.build<Employee>({
         class: Employee,
-        dbName: 'ass',
-        securityLevel: relationalStore.SecurityLevel.S1
+        config: {
+          name: 'RdbTest.db', // 数据库文件名
+          securityLevel: relationalStore.SecurityLevel.S3, // 数据库安全级别
+          encrypt: false, // 可选参数，指定数据库是否加密，默认不加密
+          customDir: 'customDir/subCustomDir', // 可选参数，数据库自定义路径。
+          isReadOnly: false // 可选参数，是否以只读方式打开。默认为false
+        }
       })
     }
     return EmpMapper.mapper
-  }
-
-  /**
-   * 创建表
-   */
-  static async createTable() {
-    try {
-      const db = await EmpMapper.getInstance().getConnection()
-      await db.execDML(`DROP TABLE IF EXISTS t_emp  ;`, [])
-      await db.execDML(
-        `create table if not exists "t_emp" (
-          id integer primary key autoincrement,
-          name varchar(20),
-          age integer
-      )`, [])
-      await db.close()
-    } catch (e) {
-      console.error(e)
-    }
   }
 }
 ```
@@ -196,17 +220,9 @@ struct Index {
 
   build() {
     Column() {
-      Button('初始化').onClick(() => {
-        try {
-          await EmpMapper.createTable()
-          showDialog('初始化完成，查看日志')
-        } catch (e) {
-          console.error(e)
-        }
-      })
-
       Button('count').onClick(async () => {
         try {
+          // 入参可空，即不构造条件查询
           let num = await this.mapper.count(new Wrapper())
           showDialog(num + '')
         } catch (e) {
@@ -218,12 +234,54 @@ struct Index {
 }
 ```
 
-### 建表、连接查询等复杂SQl，采用手写SQL方法
+### 创建表、数据库版本管理、复杂SQL
 
-1. 调用`EmpMapper`对象中的`getConnection()`方法，得到一个`Connection`对象
-2. `Connection`有两个函数：`execDML`、`execDQL`  
-   `execDML`是数据操纵函数，执行创建、添加、修改 语句  
-   `execDQL`是数据查询函数，执行查询语句
+1. 调用`EmpMapper`对象中的`getConnection()`方法，得到一个[Connection](#Connection)对象
+2. `execDML`执行创建、添加、修改语句，`execDQL`执行查询语句
+
+```typescript
+console.log('删除数据库')
+Connection.deleteRdbStore('RdbTest.db')
+```
+
+```typescript
+/**
+ * 创建表
+ * 修改表结构需要控制版本
+ * 修改后数据库版本增加，且无法降低版本
+ */
+function createTable() {
+  let db: Connection | undefined = undefined
+  try {
+    db = await EmpMapper.getInstance().getConnection()
+    console.log('createTable 首次打开 版本 0');
+    // 初始默认 0
+    if (db.version === 0) {
+      await db.execDML(
+        `create table if not exists "t_emp" (
+              id integer primary key autoincrement,
+              name varchar(20)
+          )`, [])
+      db.version = 1
+      console.log('createTable 创建表后 版本 1')
+    }
+    if (db.version === 1) {
+      // 添加字段
+      db.execDML('ALTER TABLE t_emp ADD COLUMN  age integer');
+      db.version = 2;
+      console.log('createTable 修改后 版本 2')
+    }
+    if (db.version === 2) {
+      // 以此类推
+      console.log('createTable 最终版本 2')
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    db?.close()
+  }
+}
+```
 
 ## API介绍
 
@@ -231,9 +289,9 @@ struct Index {
 
 查询符合条件的记录总数
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 查询条件 |
+| 入参                | 说明    |
+|-------------------|-------|
+| wrapper?: Wrapper | 条件构造器 |
 
 | 返回值    | 说明  |
 |--------|-----|
@@ -251,9 +309,9 @@ try {
 
 查询符合条件的记录，返回一个对象
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 搜索条件 |
+| 入参                | 说明    |
+|-------------------|-------|
+| wrapper?: Wrapper | 条件构造器 |
 
 | 返回值        | 说明   |
 |------------|------|
@@ -292,9 +350,9 @@ try {
 
 查询符合条件的记录，返回对象数组
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 搜索条件 |
+| 入参                | 说明    |
+|-------------------|-------|
+| wrapper?: Wrapper | 条件构造器 |
 
 | 返回值 | 说明   |
 |-----|------|
@@ -312,9 +370,9 @@ try {
 
 查询符合条件的第一条数据
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 搜索条件 |
+| 入参                | 说明    |
+|-------------------|-------|
+| wrapper?: Wrapper | 条件构造器 |
 
 | 返回值 | 说明   |
 |-----|------|
@@ -332,9 +390,11 @@ try {
 
 分页查询符合条件的记录，返回分页结果
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 搜索条件 |
+| 入参                | 说明    |
+|-------------------|-------|
+| current: number   | 查询页数  |
+| size: number      | 每页数量  |
+| wrapper?: Wrapper | 条件构造器 |
 
 | 返回值     | 说明     |
 |---------|--------|
@@ -463,9 +523,9 @@ try {
 
 通过指定条件更新数据
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 更新条件 |
+| 入参               | 说明    |
+|------------------|-------|
+| wrapper: Wrapper | 条件构造器 |
 
 | 返回值  | 说明       |
 |------|----------|
@@ -507,9 +567,9 @@ try {
 
 通过指定条件删除数据
 
-| 入参               | 说明   |
-|------------------|------|
-| wrapper: Wrapper | 删除条件 |
+| 入参               | 说明    |
+|------------------|-------|
+| wrapper: Wrapper | 条件构造器 |
 
 | 返回值  | 说明       |
 |------|----------|
@@ -526,13 +586,13 @@ try {
 
 ### getConnection
 
-获取一个数据库的连接对象`Connection`，调用Connection可以直接进行SQL语句的调用
+获取一个`Connection`对象，调用Connection可以直接进行数据库操作、执行SQL语句
 
-参考上面的[建表、连接查询等复杂SQl，采用手写SQL方法](#建表连接查询等复杂sql采用手写sql方法)
+## Connection
 
-#### create
+### create
 
-static函数，获取一个新的数据库连接
+手动获取一个新的数据库连接
 
 | 入参                                  | 说明    |
 |-------------------------------------|-------|
@@ -542,7 +602,23 @@ static函数，获取一个新的数据库连接
 |------------|--------------|
 | Connection | Connection对象 |
 
-#### execDML
+```typescript
+let config :relationalStore.StoreConfig = {
+  name: 'RdbTest.db', // 数据库文件名
+  securityLevel: relationalStore.SecurityLevel.S3, // 数据库安全级别
+}
+Connection.create(config)
+```
+
+### version
+
+可获取、修改数据库版本，参考[官方文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/data-persistence-by-rdb-store-V5#%E5%BC%80%E5%8F%91%E6%AD%A5%E9%AA%A4)
+
+### getStore
+
+获取relationalStore.RdbStore对象
+
+### execDML
 
 数据操纵函数（DML），执行插入、删除、修改语句
 
@@ -555,7 +631,7 @@ static函数，获取一个新的数据库连接
 |------|----------|
 | void | 执行失败抛出异常 |
 
-#### execDQL
+### execDQL
 
 是数据查询函数，执行select语句
 
@@ -564,25 +640,64 @@ static函数，获取一个新的数据库连接
 | sql: string | SQL语句                               |
 | params      | 数组，SQL语句中参数的值。该值与sql参数语句中的`？`占位符相对应 |
 
-| 返回值                       | 说明          |
-|---------------------------|-------------|
-| relationalStore.ResultSet | 返回ResultSet |
+| 返回值                       | 说明                   |
+|---------------------------|----------------------|
+| relationalStore.ResultSet | 返回ResultSet，执行失败抛出异常 |
 
-#### beginTransaction
+### beginTransaction
 
-开启事务
+开启事务，参考[事务](#事务)
 
-#### commit
+### commit
 
 提交事务
 
-#### rollBack
+### rollBack
 
 回滚事务
 
-#### close
+### close
 
-关闭当前的Connection连接
+关闭数据库连接
+
+### backup
+
+备份，默认在RdbStore同路径下备份。也可指定路径：customDir + "backup.db"
+
+| 入参               | 说明                                                              |
+|------------------|-----------------------------------------------------------------|
+| fileName: string | 文件名默认`Backup.db`，在RdbStore同路径下备份。也可指定路径：customDir + "backup.db" |
+
+```typescript
+let db = await EmpMapper.getInstance().getConnection()
+db.backup()
+```
+
+### restore
+
+恢复备份
+
+| 入参               | 说明                                                              |
+|------------------|-----------------------------------------------------------------|
+| fileName: string | 文件名默认`Backup.db`，在RdbStore同路径下备份。也可指定路径：customDir + "backup.db" |
+
+```typescript
+let db = await EmpMapper.getInstance().getConnection()
+db.restore()
+```
+
+### deleteRdbStore
+
+删除数据库
+
+| 入参             | 说明   |
+|----------------|------|
+| dbName: string | 数据库名 |
+
+```typescript
+// 初始化后可以调用
+Connection.deleteRdbStore('RdbTest.db')
+```
 
 ## 条件构造器介绍
 

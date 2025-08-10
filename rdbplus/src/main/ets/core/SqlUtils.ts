@@ -45,7 +45,7 @@ export class SqlUtils<T> {
   }
 
   count(whereSql: string, groupSql: string, orderSql: string) {
-    let sql = `select count(*) as count from ${this.tableName} where ${whereSql} ${groupSql} ${orderSql};`
+    let sql = `select count(*) from ${this.tableName} where ${whereSql} ${groupSql} ${orderSql};`
     return sql
   }
 

@@ -2,10 +2,10 @@
  * @author yongoe
  * @since 2024/10/15
  */
-import { Wrapper } from 'rdbplus'
-import { Employee } from './Employee'
-import { EmpMapper } from './EmpMapper'
-import { showDialog } from './MessageDialog'
+import { Connection, Wrapper } from 'rdbplus'
+import { Employee } from '../rdb/Employee'
+import { EmpMapper } from '../rdb/EmpMapper'
+import { showDialog } from '../rdb/MessageDialog'
 
 @Entry
 @Component
@@ -15,6 +15,10 @@ struct Index {
   build() {
 
     Flex({ wrap: FlexWrap.Wrap }) {
+      Button('删除数据库').onClick((event: ClickEvent) => {
+        Connection.deleteRdbStore('RdbTest.db')
+        showDialog('删除数据库')
+      })
       Button('初始化').onClick(async () => {
         try {
           await EmpMapper.createTable()
@@ -352,8 +356,6 @@ struct Index {
         this.mapper.getConnection()
           .then(async db => {
             try {
-              // 获取一个db连接
-              const db = await this.mapper.getConnection()
               db.beginTransaction()
               const emp = new Employee()
               emp.name = '事务'

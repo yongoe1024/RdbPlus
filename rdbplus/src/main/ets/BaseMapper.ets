@@ -15,19 +15,16 @@ export class BaseMapper<T> {
   public static build<T>(param: BuildParams<T>): BaseMapper<T> {
     let tableName = getEntityMeta(param.class)
     let columnsMeta = getColumnMeta(param.class)
-    let config: relationalStore.StoreConfig = {
-      name: param.dbName,
-      securityLevel: param.securityLevel
-    }
     // 校验参数
-    if (tableName && columnsMeta.length > 0 && param.dbName) {
+    if (tableName && columnsMeta.length > 0) {
     } else {
-      throw new Error('表参数错误')
+      console.error('rdb BaseMapper build 失败，实体类缺少装饰器')
+      throw new Error('实体类缺少装饰器')
     }
     //-------
     let getRow: (res: relationalStore.ResultSet) => T = (res: relationalStore.ResultSet) => {
-      // let obj = new param.class()
-      let result: ESObject = {}
+      let obj = new param.class()
+      let result: ESObject = obj
       let columnNames = res.columnNames
       for (let i = 0; i < columnNames.length; i++) {
         let e = columnNames[i]
@@ -36,7 +33,7 @@ export class BaseMapper<T> {
       return result as T
     }
     let sqlUtil = new SqlUtils<T>(tableName, columnsMeta)
-    return new BaseMapper(config, sqlUtil, getRow)
+    return new BaseMapper(param.config, sqlUtil, getRow)
   }
 
   private constructor(config: relationalStore.StoreConfig, sqlUtils: SqlUtils<T>,
@@ -49,8 +46,8 @@ export class BaseMapper<T> {
   /**
    * 获取新连接
    */
-  async getConnection() {
-    return await Connection.create(this.config)
+  async getConnection(): Promise<Connection> {
+    return Connection.create(this.config)
   }
 
   /**
@@ -58,9 +55,9 @@ export class BaseMapper<T> {
    * @param wrapper 查询条件
    * @returns 行数
    */
-  async count(wrapper: Wrapper, db?: Connection): Promise<number> {
+  async count(wrapper: Wrapper = new Wrapper(), db?: Connection): Promise<number> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -71,6 +68,7 @@ export class BaseMapper<T> {
       myWrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(sql, myWrapper.getValue())
     res.goToFirstRow()
+    let a = res.columnNames
     const count: number = res.getLong(0)
     res.close()
     if (isClose) {
@@ -84,9 +82,9 @@ export class BaseMapper<T> {
    * @param wrapper 查询条件
    * @returns 对象数组
    */
-  async getObject(wrapper: Wrapper, db?: Connection): Promise<ESObject[]> {
+  async getObject(wrapper: Wrapper = new Wrapper(), db?: Connection): Promise<ESObject[]> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -123,7 +121,7 @@ export class BaseMapper<T> {
    */
   async getObjectBySql(sql: string, params: relationalStore.ValueType[], db?: Connection): Promise<ESObject[]> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -150,9 +148,9 @@ export class BaseMapper<T> {
    * @param wrapper 查询条件
    * @returns 实体类的数组
    */
-  async getList(wrapper: Wrapper, db?: Connection): Promise<T[]> {
+  async getList(wrapper: Wrapper = new Wrapper(), db?: Connection): Promise<T[]> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -182,9 +180,9 @@ export class BaseMapper<T> {
    * @param wrapper 查询条件
    * @returns 实体类的数组
    */
-  async getOne(wrapper: Wrapper, db?: Connection): Promise<T | undefined> {
+  async getOne(wrapper: Wrapper = new Wrapper(), db?: Connection): Promise<T | undefined> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -215,9 +213,9 @@ export class BaseMapper<T> {
    * @param wrapper 查询条件
    * @returns Page类
    */
-  async getPage(current: number, size: number, wrapper: Wrapper, db?: Connection): Promise<Page<T>> {
+  async getPage(current: number, size: number, wrapper: Wrapper = new Wrapper(), db?: Connection): Promise<Page<T>> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -249,7 +247,7 @@ export class BaseMapper<T> {
    */
   async getById(id: relationalStore.ValueType, db?: Connection): Promise<T | undefined> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -275,7 +273,7 @@ export class BaseMapper<T> {
    */
   async insert(obj: T, db?: Connection): Promise<void> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -294,7 +292,7 @@ export class BaseMapper<T> {
    */
   async insertBatch(list: T[], db?: Connection): Promise<void> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -313,7 +311,7 @@ export class BaseMapper<T> {
    */
   async update(wrapper: Wrapper, db?: Connection): Promise<void> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -333,7 +331,7 @@ export class BaseMapper<T> {
    */
   async updateById(obj: T, db?: Connection): Promise<void> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -352,7 +350,7 @@ export class BaseMapper<T> {
    */
   async delete(wrapper: Wrapper, db?: Connection): Promise<void> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
@@ -372,7 +370,7 @@ export class BaseMapper<T> {
    */
   async deleteById(id: relationalStore.ValueType, db?: Connection): Promise<void> {
     let isClose: boolean = true
-    if (db == undefined) {
+    if (db === undefined) {
       db = await this.getConnection()
     } else {
       isClose = false
