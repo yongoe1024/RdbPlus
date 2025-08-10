@@ -60,6 +60,9 @@ https://github.com/yongoe1024/RdbPlus/tree/main/entry/src/main/ets
     - [第二步：创建Mapper类](#第二步创建mapper类)
     - [第三步：页面中调用](#第三步页面中调用)
     - [创建表、数据库版本管理、复杂SQl](#创建表数据库版本管理复杂sql)
+- [装饰器介绍](#装饰器介绍)
+    - [@Table](#Table)
+    - [@TableField](#TableField)
 - [API介绍](#api介绍)
     - [count](#count)
     - [getObject](#getobject)
@@ -293,7 +296,7 @@ function createTable() {
 
 ## 装饰器介绍
 
-### @Table
+### Table
 
 用于指定实体类对应的数据库表名
 
@@ -301,7 +304,7 @@ function createTable() {
 |-------------------|-------|
 | tableName: string | 数据库表名 |
 
-### @TableField
+### TableField
 
 用于标记实体类中的字段
 
