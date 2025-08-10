@@ -6,29 +6,30 @@ import { SqlData } from "../model/SqlData"
 export class SqlUtils<T> {
   // 字段信息
   columns: TableFieldParams[]
-  // 表明
+  // 表名
   tableName: string
-  // 主键类型
-  idType: FieldType
   // 主键名
   idName: string
-  // 字段数组
+  // 类属性名数组
+  propertyKeys: string[]
+  // 字段名数组
   fields: string[]
-  // 字段 逗号分隔
+  // 字段 逗号分隔字符串
   fieldsTemp: string
-  // 相对参数 问号，逗号分隔
+  // 相对字段参数 问号，逗号分隔字符串
   valueTemp: string
 
   constructor(tableName: string, columns: TableFieldParams[]) {
     this.columns = columns
     this.tableName = tableName
     this.fields = []
+    this.propertyKeys = []
     for (let index = 0; index < columns.length; index++) {
       if (columns[index].isPrimaryKey) {
-        this.idType = columns[index].type
         this.idName = columns[index].name
       }
       this.fields.push(columns[index].name)
+      this.propertyKeys.push(columns[index].propertyKey)
     }
     this.fieldsTemp = this.fields.join(',')
     this.valueTemp = new Array(this.fields.length).fill('?').join(',')
@@ -68,9 +69,8 @@ export class SqlUtils<T> {
   insert(obj: T) {
     // 取出数据库字段
     let values: relationalStore.ValueType[] = []
-    for (let index = 0; index < this.columns.length; index++) {
-      let name = this.columns[index].name
-      let v = obj[name]
+    for (let propertyKey of this.propertyKeys){
+      let v = obj[propertyKey]
       if (v !== undefined) {
         values.push(v)
       } else {
@@ -88,8 +88,8 @@ export class SqlUtils<T> {
     // 取出数据库字段
     let values: relationalStore.ValueType[] = []
     for (let item of list) {
-      for (let field of this.fields) {
-        let v = item[field]
+      for (let propertyKey of this.propertyKeys) {
+        let v = item[propertyKey]
         if (v !== undefined) {
           values.push(v)
         } else {
@@ -111,11 +111,11 @@ export class SqlUtils<T> {
     // 取出数据库字段
     let values: relationalStore.ValueType[] = []
     let setSql: string[] = []
-    for (let field of this.fields) {
-      let v = obj[field]
+    for (let i = 0; i < this.propertyKeys.length; i++) {
+      let v = obj[this.propertyKeys[i]]
       // 不更新 undefined，更新null
       if (v !== undefined) {
-        setSql.push(`${field}=?`)
+        setSql.push(`${this.fields[i]}=?`)
         values.push(v)
       }
     }

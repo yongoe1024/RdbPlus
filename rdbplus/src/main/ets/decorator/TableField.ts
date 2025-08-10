@@ -8,6 +8,9 @@ export function TableField(options: TableFieldParams) {
     if (!target.constructor.__tableFieldMeta__) {
       target.constructor.__tableFieldMeta__ = [];
     }
+    if (options.name === undefined) {
+      options.name = propertyKey
+    }
     target.constructor.__tableFieldMeta__.push({
       propertyKey,
       ...options

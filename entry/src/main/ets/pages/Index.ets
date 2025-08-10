@@ -269,35 +269,35 @@ struct Index {
           const emp: Employee[] = [
             {
               name: '123',
-              age: 18
+              myAge: 18
             },
             {
               name: '124',
-              age: 18
+              myAge: 18
             },
             {
               name: '张三',
-              age: 20
+              myAge: 20
             },
             {
               name: '李四',
-              age: 20
+              myAge: 20
             },
             {
               name: '网二',
-              age: 21
+              myAge: 21
             },
             {
               name: undefined,
-              age: undefined
+              myAge: undefined
             },
             {
               name: 'age是undefined',
-              age: undefined
+              myAge: undefined
             },
             {
               name: undefined,
-              age: 30
+              myAge: 30
             },
           ]
           await this.mapper.insertBatch(emp)
@@ -321,7 +321,7 @@ struct Index {
 
       Button('再次修改update').onClick(async () => {
         try {
-          await this.mapper.update(new Wrapper().set('name', 'update使用set修改').eq('name', 'updateById'))
+          await this.mapper.update(new Wrapper().set('name', 'update使用set修改').set('id',100).eq('name', 'updateById'))
           showDialog('成功')
         } catch (e) {
           console.error(e)
@@ -359,7 +359,7 @@ struct Index {
               db.beginTransaction()
               const emp = new Employee()
               emp.name = '事务'
-              emp.age = 44
+              emp.myAge = 44
               // 将 db 传进去，保持所有操作在同一连接上
               this.mapper.insert(emp, db)
               //提交事务

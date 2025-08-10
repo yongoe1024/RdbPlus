@@ -25,10 +25,13 @@ export class BaseMapper<T> {
     let getRow: (res: relationalStore.ResultSet) => T = (res: relationalStore.ResultSet) => {
       let obj = new param.class()
       let result: ESObject = obj
-      let columnNames = res.columnNames
-      for (let i = 0; i < columnNames.length; i++) {
-        let e = columnNames[i]
-        result[e] = res.getValue(res.getColumnIndex(e))
+      for (let i = 0; i < columnsMeta.length; i++) {
+        let name = columnsMeta[i].name ?? ''
+        let propertyKey = columnsMeta[i].propertyKey ?? ''
+        let order = res.getColumnIndex(name)
+        if (order !== -1) {
+          result[propertyKey] = res.getValue(order)
+        }
       }
       return result as T
     }
