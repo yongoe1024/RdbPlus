@@ -71,7 +71,6 @@ export class BaseMapper<T> {
       myWrapper.getOrder())
     const res: relationalStore.ResultSet = await db.execDQL(sql, myWrapper.getValue())
     res.goToFirstRow()
-    let a = res.columnNames
     const count: number = res.getLong(0)
     res.close()
     if (isClose) {
@@ -272,9 +271,9 @@ export class BaseMapper<T> {
   /**
    * 添加一行数据
    * @param obj 实体类
-   * @returns 无返回值
+   * @returns sql执行结果：rowId
    */
-  async insert(obj: T, db?: Connection): Promise<void> {
+  async insert(obj: T, db?: Connection): Promise<relationalStore.ValueType> {
     let isClose: boolean = true
     if (db === undefined) {
       db = await this.getConnection()
@@ -282,18 +281,19 @@ export class BaseMapper<T> {
       isClose = false
     }
     const sqlData = this.sqlUtils.insert(obj)
-    await db.execDML(sqlData.sql, sqlData.values)
+    let res = await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
+    return res
   }
 
   /**
    * 添加一组数据
    * @param obj 实体类
-   * @returns 无返回值
+   * @returns sql执行结果：最后一个rowId
    */
-  async insertBatch(list: T[], db?: Connection): Promise<void> {
+  async insertBatch(list: T[], db?: Connection): Promise<relationalStore.ValueType> {
     let isClose: boolean = true
     if (db === undefined) {
       db = await this.getConnection()
@@ -301,18 +301,19 @@ export class BaseMapper<T> {
       isClose = false
     }
     const sqlData = this.sqlUtils.insertBatch(list)
-    await db.execDML(sqlData.sql, sqlData.values)
+    let res = await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
+    return res
   }
 
   /**
    * 更新，手动set更新字段
    * @param wrapper 更新条件
-   * @returns 无返回值
+   * @returns sql执行结果：改变数量
    */
-  async update(wrapper: Wrapper, db?: Connection): Promise<void> {
+  async update(wrapper: Wrapper, db?: Connection): Promise<relationalStore.ValueType> {
     let isClose: boolean = true
     if (db === undefined) {
       db = await this.getConnection()
@@ -321,18 +322,19 @@ export class BaseMapper<T> {
     }
     let myWrapper = MyWrapper.build(wrapper)
     const sql = this.sqlUtils.update(myWrapper.getUpdate(), myWrapper.getWhere())
-    await db.execDML(sql, [...myWrapper.getUpdateValue(), ...myWrapper.getValue()])
+    let res = await db.execDML(sql, [...myWrapper.getUpdateValue(), ...myWrapper.getValue()])
     if (isClose) {
       await db.close()
     }
+    return res
   }
 
   /**
    * 根据主键更新
    * @param obj 实体类，id不可以为空
-   * @returns 无返回值
+   * @returns sql执行结果：改变数量
    */
-  async updateById(obj: T, db?: Connection): Promise<void> {
+  async updateById(obj: T, db?: Connection): Promise<relationalStore.ValueType> {
     let isClose: boolean = true
     if (db === undefined) {
       db = await this.getConnection()
@@ -340,18 +342,19 @@ export class BaseMapper<T> {
       isClose = false
     }
     const sqlData = this.sqlUtils.updateById(obj)
-    await db.execDML(sqlData.sql, sqlData.values)
+    let res = await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
+    return res
   }
 
   /**
    * 条件删除
    * @param wrapper 删除条件
-   * @returns 无返回值
+   * @returns sql执行结果：改变数量
    */
-  async delete(wrapper: Wrapper, db?: Connection): Promise<void> {
+  async delete(wrapper: Wrapper, db?: Connection): Promise<relationalStore.ValueType> {
     let isClose: boolean = true
     if (db === undefined) {
       db = await this.getConnection()
@@ -360,18 +363,19 @@ export class BaseMapper<T> {
     }
     let myWrapper = MyWrapper.build(wrapper)
     const sql = this.sqlUtils.delete(myWrapper.getWhere())
-    await db.execDML(sql, myWrapper.getValue())
+    let res = await db.execDML(sql, myWrapper.getValue())
     if (isClose) {
       await db.close()
     }
+    return res
   }
 
   /**
    * 根据主键删除
    * @param id 主键
-   * @returns 无返回值
+   * @returns sql执行结果：改变数量
    */
-  async deleteById(id: relationalStore.ValueType, db?: Connection): Promise<void> {
+  async deleteById(id: relationalStore.ValueType, db?: Connection): Promise<relationalStore.ValueType> {
     let isClose: boolean = true
     if (db === undefined) {
       db = await this.getConnection()
@@ -379,10 +383,11 @@ export class BaseMapper<T> {
       isClose = false
     }
     const sqlData = this.sqlUtils.deleteById(id)
-    await db.execDML(sqlData.sql, sqlData.values)
+    let res = await db.execDML(sqlData.sql, sqlData.values)
     if (isClose) {
       await db.close()
     }
+    return res
   }
 }
 

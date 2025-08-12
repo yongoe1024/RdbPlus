@@ -173,7 +173,7 @@ struct Index {
 
       Divider()
         .width('100%')
-        .height(40)
+        .height(20)
         .color('#000')
 
       Button('like name(12%)').onClick(async () => {
@@ -232,7 +232,7 @@ struct Index {
 
       Divider()
         .width('100%')
-        .height(40)
+        .height(20)
         .color('#000')
 
       Button('groupBy age=18 count(*)').onClick(async () => {
@@ -261,10 +261,10 @@ struct Index {
 
       Divider()
         .width('100%')
-        .height(40)
+        .height(20)
         .color('#000')
 
-      Button('批量添加').onClick(async () => {
+      Button('批量添加8条').onClick(async () => {
         try {
           const emp: Employee[] = [
             {
@@ -300,8 +300,8 @@ struct Index {
               myAge: 30
             },
           ]
-          await this.mapper.insertBatch(emp)
-          showDialog('成功')
+          let num = await this.mapper.insertBatch(emp)
+          showDialog('成功' + num)
         } catch (e) {
           console.error(e)
         }
@@ -312,8 +312,8 @@ struct Index {
           const emp = new Employee()
           emp.id = 3
           emp.name = 'updateById'
-          await this.mapper.updateById(emp)
-          showDialog('成功')
+          let num = await this.mapper.updateById(emp)
+          showDialog('成功' + num)
         } catch (e) {
           console.error(e)
         }
@@ -321,8 +321,10 @@ struct Index {
 
       Button('再次修改update').onClick(async () => {
         try {
-          await this.mapper.update(new Wrapper().set('name', 'update使用set修改').set('id',100).eq('name', 'updateById'))
-          showDialog('成功')
+          let num = await this.mapper.update(new Wrapper().set('name', 'update使用set修改')
+            .set('id', 100)
+            .eq('name', 'updateById'))
+          showDialog('成功' + num)
         } catch (e) {
           console.error(e)
         }
@@ -330,8 +332,8 @@ struct Index {
 
       Button('删除id=3').onClick(async () => {
         try {
-          await this.mapper.delete(new Wrapper().eq('id', 3))
-          showDialog('成功')
+          let num = await this.mapper.delete(new Wrapper().eq('id', 3))
+          showDialog('成功' + num)
         } catch (e) {
           console.error(e)
         }
@@ -339,8 +341,8 @@ struct Index {
 
       Button('deleteById id=3').onClick(async () => {
         try {
-          await this.mapper.deleteById(3)
-          showDialog('成功')
+          let num = await this.mapper.deleteById(3)
+          showDialog('成功' + num)
         } catch (e) {
           console.error(e)
         }
@@ -348,7 +350,7 @@ struct Index {
 
       Divider()
         .width('100%')
-        .height(40)
+        .height(20)
         .color('#000')
 
       Button('事务成功').onClick(async () => {
@@ -361,9 +363,10 @@ struct Index {
               emp.name = '事务'
               emp.myAge = 44
               // 将 db 传进去，保持所有操作在同一连接上
-              this.mapper.insert(emp, db)
+              let num = await this.mapper.insert(emp, db)
               //提交事务
               db.commit()
+              showDialog('成功' + num)
             } catch (e) {
               // 回滚
               db.rollBack()
@@ -402,7 +405,6 @@ struct Index {
             console.log('db获取失败')
           })
       })
-
     }
     .width('100%')
     .height('100%')

@@ -72,10 +72,10 @@ export class Connection {
   /**
    * 执行：插入修改删除
    */
-  async execDML(sql: string, params: Array<relationalStore.ValueType> = []): Promise<void> {
+  async execDML(sql: string, params: Array<relationalStore.ValueType> = []): Promise<relationalStore.ValueType> {
     try {
       Connection.logger?.info('execDML:', sql, JSON.stringify(params))
-      await this.store.executeSql(sql, params)
+      return this.store.execute(sql, params)
     } catch (e) {
       Connection.logger?.error('execDML', e.message, e.code, JSON.stringify(e))
       throw new Error('execDML 执行失败')
@@ -88,8 +88,7 @@ export class Connection {
   async execDQL(sql: string, params: Array<relationalStore.ValueType> = []): Promise<relationalStore.ResultSet> {
     try {
       Connection.logger?.info('execDQL:', sql, JSON.stringify(params))
-      const res: relationalStore.ResultSet = await this.store.querySql(sql, params)
-      return res
+      return this.store.querySql(sql, params)
     } catch (e) {
       Connection.logger?.error('execDQL', e.message, e.code, JSON.stringify(e))
       throw new Error('execDQL 执行失败')
