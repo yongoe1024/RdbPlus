@@ -1,5 +1,9 @@
 # rdb-plus 使用文档
 
+！！！！已经升级为更强大的rdborm：https://github.com/yongoe1024/RdbOrm
+全新架构，原生体验
+！！！！
+
 ## 简介
 
 SQLite的ORM框架，无需编写sql代码，通过装饰器解析表结构，一行搞定增删改查
